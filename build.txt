@@ -1,0 +1,3 @@
+displayName = Bulk Extractinator
+author = Leapofod
+version = 0.1

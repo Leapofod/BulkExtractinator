@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "FMC25+3yIN1Rr8fpV8zY3r6+bWtl/oja8FHql5HQklS08PZ+dcZvPHHzdeMav4gRh3xFlGta6RW7FmwXar57yg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\ittih\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\BulkExtractinator\\BulkExtractinator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ittih\\.nuget\\packages\\tmodloader.codeassist\\0.1.5\\tmodloader.codeassist.0.1.5.nupkg.sha512"
+  ],
+  "logs": []
+}
