@@ -90,6 +90,50 @@ internal static class ExtractionHelper
 	}
 
 
+	private static bool InsertToOneSlot(Item[] inv, ref Item itemToInsert, bool reverseFillEmpty = true)
+	{
+		if (itemToInsert.IsAir)
+			return false;
+		int slot;
+		{
+			int emptySlot = -1;
+			int existingSlot = -1;
+			for (int i = 0; i < inv.Length; i++)
+			{
+				if (!inv[i].IsAir && inv[i].type == itemToInsert.type && inv[i].stack < inv[i].maxStack)
+				{
+					existingSlot = i;
+					break;
+				}
+				else if (inv[i].IsAir)
+				{
+					if (reverseFillEmpty || emptySlot == -1)
+						emptySlot = i;
+				}
+			}
+			if (existingSlot != -1)
+				slot = existingSlot;
+			else 
+				slot = emptySlot;
+		}
+		if (slot == -1)
+			return false;
+
+		if (inv[slot].IsAir)
+		{
+			inv[slot].SetDefaults(itemToInsert.type);
+			itemToInsert.stack--;
+		}
+
+		int slotCapacity = inv[slot].maxStack - inv[slot].stack;
+		int amountToMove = (int)MathHelper.Min(slotCapacity, itemToInsert.stack);
+
+		inv[slot].stack += amountToMove;
+		itemToInsert.stack -= amountToMove;
+
+		return true;
+	}
+
 	private static bool TryInsertCoin(int Type, int stack, Player player)
 	{
 		if (!ItemID.Sets.CommonCoin[Type])
