@@ -1,7 +1,9 @@
 ﻿Mods: {
 	BulkExtractinator: {
 		UI: {
-			
+			Extractinator: Extractinator
+			ExtractUntilFull: Extract all until inventory is filled
+			ExtractEverything: Extract and drop overflow on ground
 		}
 	}
 }

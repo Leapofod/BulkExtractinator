@@ -9,6 +9,14 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractUIState : UIState
 {
+	public override void OnInitialize()
+	{
+		var extractButton = new ExtractinatorButtonElement();
+		extractButton.Left.Set(180, 0f);
+		extractButton.Top.Set(310, 0f);
+		Append(extractButton);
+	}
+
 	protected override void DrawSelf(SpriteBatch spriteBatch)
 	{
 		if (Main.recBigList)

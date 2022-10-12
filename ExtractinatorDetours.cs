@@ -11,11 +11,19 @@ internal sealed class ExtractinatorDetours : ModSystem
 		On.Terraria.NetMessage.SendData += BlockNetMessage_SendData;
 
 		On.Terraria.GameContent.Creative.CreativeUI.Draw += BlockCreativeUI_Draw;
+		On.Terraria.GameContent.Creative.CreativeUI.ToggleMenu += BlockCreativeUI_ToggleMenu;
+	}
+
+	private void BlockCreativeUI_ToggleMenu(On.Terraria.GameContent.Creative.CreativeUI.orig_ToggleMenu orig, Terraria.GameContent.Creative.CreativeUI self)
+	{
+		if (ExtractinatorPlayer.ExtractinatorOpenLocally)
+			return;
+		orig(self);
 	}
 
 	private void BlockCreativeUI_Draw(On.Terraria.GameContent.Creative.CreativeUI.orig_Draw orig, Terraria.GameContent.Creative.CreativeUI self, Microsoft.Xna.Framework.Graphics.SpriteBatch spriteBatch)
 	{
-		if (ExtractinatorUI.IsUIOpen && !Main.CreativeMenu.Enabled)
+		if (ExtractinatorPlayer.ExtractinatorOpenLocally)
 			return;
 		orig(self, spriteBatch);
 	}
@@ -31,6 +39,7 @@ internal sealed class ExtractinatorDetours : ModSystem
 	{
 		if (ExtractionHelper.ShouldInterceptNewItem)
 		{
+			ExtractionHelper.OnNewItemIntercept(Type, Stack);
 			ExtractionHelper.EnqueueItem(Type, Stack);
 			return 0;
 		}
