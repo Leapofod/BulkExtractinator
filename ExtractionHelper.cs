@@ -42,39 +42,7 @@ internal static class ExtractionHelper
 					successfulExtract = true;
 				}
 			}			
-			//if (!modPlr.RemainderExtractedItem.IsAir)
-			//{
-			//	ref var remainderItem = ref modPlr.RemainderExtractedItem;	
-				//var inserted = InsertToOneSlot(player.inventory, ref remainderItem, endIndex: remainderItem.IsACoin ? 54 : 50);
-
-				//if (inserted)
-				//{
-				//	extractionFuel.stack--;
-				//	successfulExtract = true;
-				//	for (int i = 0; i < 54; i++)
-				//		player.DoCoins(i);
-				//}
-				//else
-				//	return false;
-
-				//if (!remainderItem.IsAir)
-				//	return successfulExtract;
-				//if (TryInsertIntoInventory(remainderItem.type, remainderItem.stack, player)
-				//	|| TryInsertIntoVoidVault(remainderItem.type, remainderItem.stack, player))
-				//{
-				//	AddToAquiredTally(modPlr.RemainderExtractedItem);
-				//	modPlr.RemainderExtractedItem.TurnToAir();
-				//	extractionFuel.stack--;
-				//	successfulExtract = true;
-				//}
-				//else if (!limitToAvailableSpace)
-				//{
-
-				//}
-				//else // can't insert into inventory and dropping isn't enabled so early return
-				//	return false;
-			//}
-
+			
 			var p_extractinatorUse = player.GetType().GetMethod("ExtractinatorUse",
 				System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 			while (!extractionFuel.IsAir && _justExtractedItem.IsAir)
@@ -100,28 +68,12 @@ internal static class ExtractionHelper
 					didExtract = true;
 					// add to drop queue.
 				}
-
-				//if (TryInsertIntoInventory(_justExtractedItem.type, _justExtractedItem.stack, player) 
-				//	|| TryInsertIntoVoidVault(_justExtractedItem.type, _justExtractedItem.stack, player))
-				//{
-				//	AddToAquiredTally(_justExtractedItem);
-				//	successfulExtract = true;
-				//}
-				//else if (!limitToAvailableSpace)
-				//{
-
-				//}
-				//else
-				//{
-				//	//modPlr.RemainderExtractedItem = _justExtractedItem;
-				//	break;
-				//}
+				
 				if (didExtract)
 				{
 					extractionFuel.stack--;
 					successfulExtract = true;
 				}
-				//_justExtractedItem.TurnToAir();
 			}
 
 			modPlr.RemainderExtractedItem = _justExtractedItem.Clone();
@@ -175,29 +127,6 @@ internal static class ExtractionHelper
 		return successfulInsert;
 	}
 
-	private static void SortCoinsInInv(Item[] inv, int slot, int startIndex, int slotCount)
-	{
-		if (inv[slot].IsAir || !inv[slot].IsACoin || inv[slot].stack < inv[slot].maxStack || inv[slot].type == ItemID.PlatinumCoin)
-			return;
-
-		inv[slot].SetDefaults(inv[slot].type + 1);
-		var queryInv = inv[startIndex..(int)MathHelper.Min(inv.Length, startIndex + slotCount)];
-		for (int i = startIndex; i < queryInv.Length + startIndex; i++)
-		{
-			if (inv[i].type == inv[slot].type && i != slot && inv[i].stack < inv[i].maxStack)
-			{
-				inv[i].stack++;
-				inv[slot].TurnToAir();
-				if (!inv[slot].IsAir && inv[slot].IsACoin && inv[slot].stack == inv[slot].maxStack && inv[slot].type != ItemID.PlatinumCoin)
-				{
-					slot = i;
-					inv[slot].SetDefaults(inv[slot].type + 1);
-					i = startIndex;
-				}
-			}
-		}
-	}
-
 	private static void SortCoinsInInv(Item[] inv, int startIndex, int slotCount)
 	{
 		var queryInv = inv[startIndex..(int)MathHelper.Min(inv.Length, startIndex + slotCount)];
@@ -219,152 +148,7 @@ internal static class ExtractionHelper
 				}
 			}
 		}
-	}
-
-	private static bool InsertToOneSlot(Item[] inv, ref Item itemToInsert, bool reverseFillEmpty = true, int startIndex = 0, int endIndex = 0)
-	{
-		if (itemToInsert.IsAir)
-			return false;
-		int slot;
-		{
-			int emptySlot = -1;
-			int existingSlot = -1;
-			for (int i = startIndex; i < MathHelper.Min(inv.Length, endIndex); i++)
-			{
-				if (!inv[i].IsAir && inv[i].type == itemToInsert.type && inv[i].stack < inv[i].maxStack)
-				{
-					existingSlot = i;
-					break;
-				}
-				else if (inv[i].IsAir)
-				{
-					if (reverseFillEmpty || emptySlot == -1)
-						emptySlot = i;
-				}
-			}
-			if (existingSlot != -1)
-				slot = existingSlot;
-			else 
-				slot = emptySlot;
-		}
-		if (slot == -1)
-			return false;
-
-		if (inv[slot].IsAir)
-		{
-			inv[slot].SetDefaults(itemToInsert.type);
-			itemToInsert.stack--;
-		}
-
-		int slotCapacity = inv[slot].maxStack - inv[slot].stack;
-		int amountToMove = (int)MathHelper.Min(slotCapacity, itemToInsert.stack);
-
-		inv[slot].stack += amountToMove;
-		itemToInsert.stack -= amountToMove;
-
-		if (itemToInsert.stack <= 0)
-			itemToInsert.TurnToAir();
-
-		return true;
-	}
-
-	private static bool TryInsertCoin(int Type, int stack, Player player)
-	{
-		if (!ItemID.Sets.CommonCoin[Type])
-			return false;
-		int slot = FindExistingOrEmptyStack(player.inventory[0..54], Type, out var existing);
-		if (slot != -1)
-		{
-			var inv = player.inventory;
-			if ((!existing || inv[slot].maxStack - inv[slot].stack >= stack) && stack <= new Item(Type).maxStack)
-			{
-				if (!existing)
-				{
-					inv[slot].SetDefaults(Type);
-					inv[slot].newAndShiny = true;
-					stack--;
-				}
-				inv[slot].stack += stack;
-				return true;
-			}
-			var origInv = new Item[inv.Length];
-			for (int i = 0; i < inv.Length; i++)
-				origInv[i] = inv[i].Clone();
-
-			while (stack > 0)
-			{
-				if (!existing)
-				{
-					inv[slot].SetDefaults(Type);
-					inv[slot].newAndShiny = true;
-					stack--;
-				}
-				int remainingStack = inv[slot].maxStack - inv[slot].stack;
-				int amountToMove = (int)MathHelper.Min(remainingStack, stack);
-				inv[slot].stack += amountToMove;
-				stack -= amountToMove;
-				player.DoCoins(slot);
-				if (stack > 0)
-					slot = FindExistingOrEmptyStack(inv[0..54], Type, out existing);
-				if (slot == -1)
-					break;
-			}
-			if (stack > 0)
-			{
-				for (int i = 0; i < inv.Length; i++)
-					inv[i] = origInv[i].Clone();
-			}
-			else
-				return true;
-		}
-		return false;
-	}
-
-	private static bool TryInsertIntoInventory(int Type, int stack, Player player)
-	{
-		if (ItemID.Sets.CommonCoin[Type])
-			return TryInsertCoin(Type, stack, player);
-
-		var inv = player.inventory;
-		int slot = FindExistingOrEmptyStack(inv[0..50], Type, out var existing);
-		if (slot != -1)
-		{
-			if ((!existing || inv[slot].maxStack - inv[slot].stack >= stack) && stack <= new Item(Type).maxStack)
-			{
-				if (!existing)
-				{
-					inv[slot].SetDefaults(Type);
-					inv[slot].newAndShiny = true;
-					stack--;
-				}
-
-				inv[slot].stack += stack;
-				return true;
-			}
-
-
-		}
-		return false;
-	}
-
-	private static bool TryInsertIntoVoidVault(int Type, int Stack, Player player)
-	{
-		bool hasOpenVoidPouch = false;
-		for (int i = 0; i < 50; i++)
-		{
-			if (player.inventory[i].type == ItemID.VoidVault)
-			{
-				hasOpenVoidPouch = true;
-				break;
-			}
-		}
-		if (!hasOpenVoidPouch)
-			return false;
-
-
-		return false;
-	}
-
+	}	
 
 	private static void AddToAquiredTally(Item item) => AddToAquiredTally(item.type, item.stack);
 	
