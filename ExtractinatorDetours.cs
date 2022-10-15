@@ -40,7 +40,6 @@ internal sealed class ExtractinatorDetours : ModSystem
 		if (ExtractionHelper.ShouldInterceptNewItem)
 		{
 			ExtractionHelper.OnNewItemIntercept(Type, Stack);
-			ExtractionHelper.EnqueueItem(Type, Stack);
 			return 0;
 		}
 		return orig(source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup);

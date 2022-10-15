@@ -32,14 +32,17 @@ internal static class ExtractionHelper
 
 			if (!_justExtractedItem.IsAir)
 			{
-				successfulExtract = InsertToInventory(player.inventory, ref _justExtractedItem, 0, _justExtractedItem.IsACoin ? 54 : 50)
+				var itemClone = _justExtractedItem.Clone();
+				itemClone.position = player.Center;
+				successfulExtract = InsertToInventory(player.inventory, ref _justExtractedItem, 0, _justExtractedItem.IsACoin ? 54 : 50);
 					//| InsertToInventory(player.bank4.item, ref _justExtractedItem, 0, 50)
-					;
+					
+				PopupText.NewText(PopupTextContext.RegularItemPickup, itemClone, itemClone.stack - _justExtractedItem.stack, false, true);
 
 				if (!limitToAvailableSpace)
 				{
 					// add to drop queue.
-					successfulExtract = true;
+					//successfulExtract = true;
 				}
 			}			
 			
@@ -57,15 +60,19 @@ internal static class ExtractionHelper
 					continue;
 				}
 
+				var extractedClone = _justExtractedItem.Clone();
+				extractedClone.position = player.Center;
 				var didExtract = 
 					InsertToInventory(player.inventory, ref _justExtractedItem, 0, _justExtractedItem.IsACoin ? 54 : 50);
+
+				PopupText.NewText(PopupTextContext.RegularItemPickup, extractedClone, extractedClone.stack - _justExtractedItem.stack, false, true);
 
 				// if has void bag:
 				// result = insert to void bag
 
 				if (!limitToAvailableSpace)
 				{
-					didExtract = true;
+					//didExtract = true;
 					// add to drop queue.
 				}
 				
