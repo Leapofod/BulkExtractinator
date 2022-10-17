@@ -19,10 +19,10 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		OnClick += HandleClick;
 
 		// check if redundant later
-		SetPadding(10f);
-		MinWidth.Set(TextureAssets.Reforge[0].Value.Width + 20f, 0f);
-		MinHeight.Set(TextureAssets.Reforge[0].Value.Height + 20f, 0f);
-		
+		Width.Set(TextureAssets.Reforge[0].Value.Width + 16f, 0f);
+		Height.Set(TextureAssets.Reforge[0].Value.Height + 16f, 0f);
+		//SetPadding(40f);
+
 		// MaxWidth.Set(TextureAssets.Reforge[1].Value.Width, 0f);
 		// MaxHeight.Set(TextureAssets.Reforge[1].Value.Height, 0f);
 	}
@@ -42,12 +42,11 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		if (!ShowButton)
 			return;
 
-		var clipRect = GetClippingRectangle(spriteBatch);
 		var tex = TextureAssets.Reforge[0].Value;
 		if (IsMouseHovering)
 			tex = TextureAssets.Reforge[1].Value;
 
-		spriteBatch.Draw(tex, clipRect.Center(), null, Color.White, 0f, tex.Size() / 2f, 1f, SpriteEffects.None, 0f);
+		spriteBatch.Draw(tex, GetViewCullingArea().Center(), null, Color.White, 0f, tex.Size() / 2f, 1f, SpriteEffects.None, 0f);
 
 		if (IsMouseHovering)
 		{

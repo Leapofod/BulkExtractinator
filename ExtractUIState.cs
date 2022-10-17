@@ -12,8 +12,8 @@ internal sealed class ExtractUIState : UIState
 	public override void OnInitialize()
 	{
 		var extractButton = new ExtractinatorButtonElement();
-		extractButton.Left.Set(180, 0f);
-		extractButton.Top.Set(310, 0f);
+		extractButton.Left.Set(170, 0f);
+		extractButton.Top.Set(290, 0f);
 		Append(extractButton);
 	}
 
@@ -28,7 +28,7 @@ internal sealed class ExtractUIState : UIState
 		Main.inventoryScale = /*0.755f;*/ 0.85f;
 
 		int xPos = 120;
-		int yPos = 310;
+		int yPos = 290;
 
 		if(player.TryGetModPlayer<ExtractinatorPlayer>(out var extractinatorPlr))
 		{
