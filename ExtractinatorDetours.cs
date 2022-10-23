@@ -15,11 +15,7 @@ internal sealed class ExtractinatorDetours : ModSystem
 		On.Terraria.GameContent.Creative.CreativeUI.Draw += BlockCreativeUI_Draw;
 		On.Terraria.GameContent.Creative.CreativeUI.ToggleMenu += BlockCreativeUI_ToggleMenu;
 
-		//On.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.FillPotentialTargetTiles += CallOrigOnFillTileCandidates;
-		//ExtractinatorHooks.On_HasSmartInteract += TileLoader_HasSmartInteract;
-
 		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.FillPotentialTargetTiles += IL_FillPotentialTargetTiles;
-		On.Terraria.GameContent.Drawing.TileDrawing.GetTileOutlineInfo += CustomGetTileOutlineInfo;
 	}
 
 	private void IL_FillPotentialTargetTiles(ILContext il)
@@ -29,52 +25,20 @@ internal sealed class ExtractinatorDetours : ModSystem
 		{
 			if (c.Prev.MatchCall(out _) && c.Prev.Previous.MatchLdarg(1))
 			{
-				//c.Remove();
-				//c.Index++;
+				// matches if (TileLoader.HasSmartInteract(i, j, tile.type, settings))
+				// loads local tile variable into stack
 				c.Emit(Mono.Cecil.Cil.OpCodes.Ldloc_2);
+				// evaluate
 				c.EmitDelegate<Func<Tile, bool>>((tile) =>
 				{
 					return BulkExtractinator.ExtractinatorTiles.Contains(tile.TileType);
 				});
+				// bitwise or with return of TileLoader.HasSmartInteract
 				c.Emit(Mono.Cecil.Cil.OpCodes.Or);
-				//c.Emit(Mono.Cecil.Cil.OpCodes.Call, typeof(BulkExtractinator).GetProperty(nameof(BulkExtractinator.ExtractinatorTiles)).GetGetMethod());
-				//c.Emit(Mono.Cecil.Cil.OpCodes.Ldloca_S, 2);
-				//c.Emit(Mono.Cecil.Cil.OpCodes.Call, typeof(Tile));
 				return;
 			}
 		}
-		throw new Exception(c.Index.ToString());
-	}
-
-	// this is so bodged, fix by finding out how to get Asset<Texture2D> values from a Texture2D value
-	private void CustomGetTileOutlineInfo(On.Terraria.GameContent.Drawing.TileDrawing.orig_GetTileOutlineInfo orig, Terraria.GameContent.Drawing.TileDrawing self, int x, int y, ushort typeCache, ref Microsoft.Xna.Framework.Color tileLight, ref Microsoft.Xna.Framework.Graphics.Texture2D highlightTexture, ref Microsoft.Xna.Framework.Color highlightColor)
-	{
-		orig(self, x, y, typeCache, ref tileLight, ref highlightTexture, ref highlightColor);
-		if (BulkExtractinator.ExtractinatorTiles.Contains(typeCache))
-		{
-			if (Main.InSmartCursorHighlightArea(x, y, out bool actuallySelected))
-			{
-				int num = (tileLight.R + tileLight.G | tileLight.B) / 3;
-				if (num > 10)
-				{
-					highlightTexture = TileOutlineHelper.HighlightTextures[typeCache];
-					highlightColor = Terraria.ID.Colors.GetSelectionGlowColor(actuallySelected, num);
-				}
-			}
-		}
-	}
-
-	// Without this the custom hook isn't called, and I don't know why.
-	private void CallOrigOnFillTileCandidates(On.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.orig_FillPotentialTargetTiles orig, Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider self, Terraria.GameContent.ObjectInteractions.SmartInteractScanSettings settings)
-	{
-		orig(self, settings);
-	}
-
-	private static bool TileLoader_HasSmartInteract(ExtractinatorHooks.Orig_HasSmartInteract orig, int i, int j, int type, Terraria.GameContent.ObjectInteractions.SmartInteractScanSettings settings)
-	{
-		if (BulkExtractinator.ExtractinatorTiles.Contains(type))
-			return true;
-		return orig(i, j, type, settings);
+		throw new Exception("Failed to IL Edit FillPotentialTargetTiles");
 	}
 
 	private void BlockCreativeUI_ToggleMenu(On.Terraria.GameContent.Creative.CreativeUI.orig_ToggleMenu orig, Terraria.GameContent.Creative.CreativeUI self)

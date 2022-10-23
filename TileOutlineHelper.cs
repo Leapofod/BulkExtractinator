@@ -1,6 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
+using ReLogic.Content.Sources;
 using System.Collections.Generic;
+using System.Reflection;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
@@ -10,13 +13,6 @@ namespace BulkExtractinator;
 
 internal static class TileOutlineHelper
 {
-	internal static readonly Dictionary<int, Texture2D> HighlightTextures;
-
-	static TileOutlineHelper()
-	{
-		HighlightTextures = new Dictionary<int, Texture2D>();
-	}
-
 	internal static void SetupHighlight(int tileType)
 	{
 		if (Main.dedServ || tileType <= 0 || tileType >= TileLoader.TileCount)
@@ -33,7 +29,7 @@ internal static class TileOutlineHelper
 			if (!TextureAssets.Tile[tileType].IsLoaded)
 				Main.instance.LoadTiles(tileType);
 
-			var origTex = TextureAssets.Tile[tileType].Value;	
+			var origTex = TextureAssets.Tile[tileType].Value;
 			var origTexData = new Color[origTex.Width * origTex.Height];
 			origTex.GetData(origTexData);
 
@@ -50,17 +46,19 @@ internal static class TileOutlineHelper
 				}
 			}
 
-			//var tempFilePath = Path.Combine(Main.SavePath, $"temp{tileType}.png");
-
 			var newTex = new Texture2D(Main.graphics.GraphicsDevice, origTex.Width, origTex.Height);
 			newTex.SetData(newTexData);
-			HighlightTextures[tileType] = newTex;
 
-			//using var stream = new FileStream(tempFilePath, FileMode.Create);
-			//newTex.SaveAsPng(stream, origTex.Width, origTex.Height);
+			var assetPath = $"Tiles\\Extractinator\\Tile_{tileType}_Highlight";
+			assetPath = assetPath.Replace('\\', System.IO.Path.DirectorySeparatorChar);
 
-			//TextureAssets.HighlightMask[tileType] = ModContent.Request<Texture2D>(Path.ChangeExtension(tempFilePath, null), ReLogic.Content.AssetRequestMode.ImmediateLoad);
-			//File.Delete(tempFilePath);
+			var assetCtor = typeof(Asset<Texture2D>).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
+			var assetSetLoaded = typeof(Asset<Texture2D>).GetMethod("SubmitLoadedContent", BindingFlags.NonPublic | BindingFlags.Instance);
+
+			var asset = assetCtor.Invoke(new object[] { assetPath }) as Asset<Texture2D>;
+			assetSetLoaded.Invoke(asset, new object[] { newTex, new FileSystemContentSource(assetPath) });
+
+			TextureAssets.HighlightMask[tileType] = asset;
 		});
 	}
 }
