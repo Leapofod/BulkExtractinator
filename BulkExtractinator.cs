@@ -13,6 +13,11 @@ public class BulkExtractinator : Mod
 		ExtractinatorTiles = new List<int>(new int[] { TileID.Extractinator });
 	}
 
+	public override void PostSetupContent()
+	{
+		TileOutlineHelper.SetupHighlight(TileID.Extractinator);
+	}
+
 	public override object Call(params object[] args)
 	{
 		if (args[0].ToString() == "AddExtractinatorTileID") 
@@ -20,6 +25,7 @@ public class BulkExtractinator : Mod
 			if (int.TryParse(args[1].ToString(), out int newTileID))
 			{
 				ExtractinatorTiles.Add(newTileID);
+				TileOutlineHelper.SetupHighlight(newTileID);
 				return true;
 			}
 			return false;

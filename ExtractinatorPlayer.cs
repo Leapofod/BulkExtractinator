@@ -34,7 +34,9 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 				Player.tileRangeX
 				|| playerCenterTile.Y < CurrentOpenExtractinator.Y - Player.tileRangeY
 				|| playerCenterTile.Y > CurrentOpenExtractinator.Y + CurrentOpenExtractinator.Height +
-				Player.tileRangeY)
+				Player.tileRangeY
+				|| !BulkExtractinator.ExtractinatorTiles.Contains(
+					Main.tile[CurrentOpenExtractinator.X, CurrentOpenExtractinator.Y].TileType))
 			{
 				CloseExtractinator();
 			}
