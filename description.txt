@@ -1,1 +1,5 @@
-[i/s1:997] [c/C0C0C0:Bulk Extractinator] is a Mod that allows you to extract items compatible with the [i/s1:997] [c/00FF7F:Extractinator] in stacks instead of one at the time.
+[i/s1:997] [c/C0C0C0:Bulk Extractinator] is a Mod that allows you to extract items compatible with the 
+[i/s1:997] [c/00FF7F:Extractinator] in stacks instead of one at the time.
+
+Usage:
+Open any Extractinator like a chest and insert the silt like items into the given slot and press the extract button

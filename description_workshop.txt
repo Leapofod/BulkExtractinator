@@ -1,1 +1,3 @@
 This is a Mod that adds the capability that allows you to extract items compatible with the Extractinator in stacks instead of one at the time.
+
+To use the feature open any Extractinator like a chest and insert the silt like items into the given slot and press the extract button.
