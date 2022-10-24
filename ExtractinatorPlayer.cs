@@ -41,7 +41,7 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 				CloseExtractinator();
 			}
 		}
-
+		
 		if (BulkExtractinator.ExtractinatorTiles
 			.Contains(Main.tile[Player.tileTargetX, Player.tileTargetY].TileType))
 		{

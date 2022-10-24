@@ -11,6 +11,10 @@ public class BulkExtractinator : Mod
 	public override void Load()
 	{
 		ExtractinatorTiles = new List<int>(new int[] { TileID.Extractinator });
+	}
+
+	public override void PostSetupContent()
+	{
 		TileOutlineHelper.SetupHighlight(TileID.Extractinator);
 	}
 

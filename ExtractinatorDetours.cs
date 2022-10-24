@@ -16,6 +16,30 @@ internal sealed class ExtractinatorDetours : ModSystem
 		On.Terraria.GameContent.Creative.CreativeUI.ToggleMenu += BlockCreativeUI_ToggleMenu;
 
 		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.FillPotentialTargetTiles += IL_FillPotentialTargetTiles;
+		ExtractinatorHooks.OnModifySmartInteractCoords += OnModifySmartInteractCoords;
+		On.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.ProvideCandidate += ProvideCandidateFix;
+	}
+
+	// needs fix
+	private bool ProvideCandidateFix(On.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.orig_ProvideCandidate orig, Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider self, Terraria.GameContent.ObjectInteractions.SmartInteractScanSettings settings, out Terraria.GameContent.ObjectInteractions.ISmartInteractCandidate candidate) => orig(self, settings, out candidate);
+
+	private void OnModifySmartInteractCoords(ExtractinatorHooks.orig_ModifySmartInteractCoords orig, int type, ref int width, ref int height, ref int frameWidth, ref int frameHeight, ref int extraY)
+	{
+		if (!BulkExtractinator.ExtractinatorTiles.Contains(type))
+		{
+			orig(type, ref width, ref height, ref frameWidth, ref frameHeight, ref extraY);
+			return;
+		}
+
+		var data = Terraria.ObjectData.TileObjectData.GetTileData(type, 0);
+		if (data == null)
+			return;
+
+		width = data.Width;
+		height = data.Height;
+		frameWidth = data.CoordinateWidth + data.CoordinatePadding;
+		frameHeight = data.CoordinateHeights[0] + data.CoordinatePadding;
+		extraY = data.CoordinateFullHeight % frameHeight;
 	}
 
 	private void IL_FillPotentialTargetTiles(ILContext il)

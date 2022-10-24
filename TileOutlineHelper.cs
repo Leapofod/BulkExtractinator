@@ -2,12 +2,12 @@
 using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Content;
 using ReLogic.Content.Sources;
-using System.Collections.Generic;
 using System.Reflection;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ObjectData;
 
 namespace BulkExtractinator;
 
@@ -31,9 +31,13 @@ internal static class TileOutlineHelper
 
 			var origTex = TextureAssets.Tile[tileType].Value;
 			var origTexData = new Color[origTex.Width * origTex.Height];
+			var newTexData = new Color[origTexData.Length];
 			origTex.GetData(origTexData);
 
-			var newTexData = new Color[origTexData.Length];
+			var tileData = TileObjectData.GetTileData(tileType, 0);
+			var padding = tileData.CoordinatePadding;
+			var width = tileData.CoordinateWidth;
+			var heights = tileData.CoordinateHeights;
 			for (int j = 0; j < origTex.Height; j++)
 			{
 				for (int i = 0; i < origTex.Width; i++)
@@ -42,10 +46,55 @@ internal static class TileOutlineHelper
 					if (origTexData[index].A == 0)
 						continue;
 
-					newTexData[index] = new Color(252, 252, 252);
+					bool isHighlight = false;
+					if (i < 2 || i >= origTex.Width - 2 - padding || j < 2 || j >= origTex.Height - 2 - padding)
+						isHighlight = true;
+					if (!isHighlight)
+					{
+						int xPart = i % (width + padding);
+						int l1Index = index - 1;
+						int l2Index = index - 2;
+						if (xPart - 1 < 0) l1Index -= padding;
+						if (xPart - 2 < 0) l2Index -= padding;
+						
+						int r1Index = index + 1;
+						int r2Index = index + 2;
+						if (xPart + 1 >= width) r1Index += padding;
+						if (xPart + 2 >= width) r2Index += padding;
+
+						if (origTexData[l1Index].A == 0 || origTexData[l2Index].A == 0 ||
+						origTexData[r1Index].A == 0 || origTexData[r2Index].A == 0)
+							isHighlight = true;
+
+						int yPart = j;
+						int partY = 0;
+						while (yPart >= heights[partY] + padding)
+						{
+							yPart -= heights[partY] + padding;
+							partY++;
+							partY %= tileData.Height;
+						}
+
+						int u1Index = index - origTex.Width;
+						int u2Index = index - (2 * origTex.Width);
+						if (yPart - 1 < 0) u1Index -= padding * origTex.Width;
+						if (yPart - 2 < 0) u2Index -= padding * origTex.Width;
+
+						int d1Index = index + origTex.Width;
+						int d2Index = index + (2 * origTex.Width);
+						if (yPart + 1 >= heights[partY]) d1Index += padding * origTex.Width;
+						if (yPart + 2 >= heights[partY]) d2Index += padding * origTex.Width;
+
+						if (origTexData[u1Index].A == 0 || origTexData[u2Index].A == 0 ||
+						origTexData[d1Index].A == 0 || origTexData[d2Index].A == 0)
+							isHighlight = true;
+					}
+					if (isHighlight)
+						newTexData[index] = new Color(252, 252, 252);
 				}
 			}
 
+			// this works and adds the texture properly but it isn't using it
 			var newTex = new Texture2D(Main.graphics.GraphicsDevice, origTex.Width, origTex.Height);
 			newTex.SetData(newTexData);
 
