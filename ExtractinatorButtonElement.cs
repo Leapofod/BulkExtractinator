@@ -16,7 +16,7 @@ internal sealed class ExtractinatorButtonElement : UIElement
 
 	public override void OnInitialize()
 	{
-		OnClick += HandleClick;
+		OnMouseDown += HandlePress;
 
 		// check if redundant later
 		Width.Set(TextureAssets.Reforge[0].Value.Width + 16f, 0f);
@@ -27,7 +27,7 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		// MaxHeight.Set(TextureAssets.Reforge[1].Value.Height, 0f);
 	}
 
-	private void HandleClick(UIMouseEvent evt, UIElement listeningElement)
+	private void HandlePress(UIMouseEvent evt, UIElement listeningElement)
 	{
 		if (evt.Target != this)
 			return;

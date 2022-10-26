@@ -18,10 +18,14 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 	public Item ExtractinatorSlotItem;
 	public Item RemainderExtractedItem;
 
+	public bool LimitExtractToInventory;
+
 	public ExtractinatorPlayer()
 	{
 		ExtractinatorSlotItem = new Item();
 		RemainderExtractedItem = new Item();
+
+		LimitExtractToInventory = false;
 	}
 
 	public override void PreUpdate()
@@ -67,6 +71,9 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 
 		if (!RemainderExtractedItem.IsAir)
 			tag["RemainderExtractedItem"] = RemainderExtractedItem;
+
+		if (LimitExtractToInventory)
+			tag["LimitExtractToInventory"] = true;
 	}
 
 	public override void LoadData(TagCompound tag)
@@ -77,6 +84,8 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 		if (tag.TryGet<Item>("RemainderExtractedItem", out var remainderItem) && !remainderItem.IsAir)
 			RemainderExtractedItem = remainderItem;
 
+		if (tag.TryGet<bool>("LimitExtractToInventory", out var limitToInventory))
+			LimitExtractToInventory = limitToInventory;
 	}
 
 	public override void OnEnterWorld(Player player)

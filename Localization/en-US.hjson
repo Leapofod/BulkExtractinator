@@ -1,9 +1,8 @@
 ﻿Mods: {
 	BulkExtractinator: {
-		UI: {
-			Extractinator: Extractinator
-			ExtractUntilFull: Extract all until inventory is filled
-			ExtractEverything: Extract and drop overflow on ground
-		}
+		InsertToExtractinator: Insert items to extract
+		
+		LimitsToInventory: Stops extracting when out of inventory space
+		IgnoresInventory: Extracts everything regardless of remaining inventory space
 	}
 }

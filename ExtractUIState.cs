@@ -9,12 +9,21 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractUIState : UIState
 {
+	ExtractModeButtonElement extractModeButton;
+
 	public override void OnInitialize()
 	{
 		var extractButton = new ExtractinatorButtonElement();
 		extractButton.Left.Set(170, 0f);
 		extractButton.Top.Set(290, 0f);
 		Append(extractButton);
+
+		extractModeButton = new ExtractModeButtonElement();
+		extractModeButton.Left.Set(110, 0);
+		extractModeButton.Top.Set(280, 0);
+		Append(extractModeButton);
+
+
 	}
 
 	protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -36,7 +45,8 @@ internal sealed class ExtractUIState : UIState
 
 			if (Utils.FloatIntersect(Main.mouseX, Main.mouseY, 0, 0, xPos, yPos,
 				TextureAssets.InventoryBack6.Width() * Main.inventoryScale,
-				TextureAssets.InventoryBack6.Height() * Main.inventoryScale))
+				TextureAssets.InventoryBack6.Height() * Main.inventoryScale)
+				&& !extractModeButton.IsMouseHovering)
 			{
 				ItemSlot.OverrideHover(ref item, ItemSlot.Context.ChestItem);
 				if (Main.mouseItem.IsAir
