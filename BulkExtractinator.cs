@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -11,6 +12,13 @@ public class BulkExtractinator : Mod
 	public override void Load()
 	{
 		ExtractinatorTiles = new List<int>(new int[] { TileID.Extractinator });
+		Main.AssetSourceController.OnResourcePackChange += OnResourcePackChange;
+	}
+
+	private void OnResourcePackChange(Terraria.IO.ResourcePackList obj)
+	{
+		foreach(var tile in ExtractinatorTiles)
+			TileOutlineHelper.RegisterHighlightTexture(tile);
 	}
 
 	public override void PostSetupContent()

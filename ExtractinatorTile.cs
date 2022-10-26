@@ -6,7 +6,7 @@ using Terraria.ObjectData;
 namespace BulkExtractinator;
 
 internal sealed class ExtractinatorTile : GlobalTile
-{	
+{
 	public override void RightClick(int i, int j, int type)
 	{
 		if (BulkExtractinator.ExtractinatorTiles.Contains(type))

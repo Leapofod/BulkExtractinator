@@ -51,7 +51,16 @@ internal static class TileOutlineHelper
 						isHighlight = true;
 					if (!isHighlight)
 					{
+						int frameX = i % tileData.CoordinateFullWidth / (width + padding);
 						int xPart = i % (width + padding);
+
+						if ((frameX == 0 && xPart < 2) || 
+							(frameX == tileData.Width - 1 && xPart >= width - 2))
+						{
+							isHighlight = true;
+							goto END;
+						}
+
 						int l1Index = index - 1;
 						int l2Index = index - 2;
 						if (xPart - 1 < 0) l1Index -= padding;
@@ -64,15 +73,25 @@ internal static class TileOutlineHelper
 
 						if (origTexData[l1Index].A == 0 || origTexData[l2Index].A == 0 ||
 						origTexData[r1Index].A == 0 || origTexData[r2Index].A == 0)
+						{
 							isHighlight = true;
+							goto END;
+						}
 
 						int yPart = j;
-						int partY = 0;
-						while (yPart >= heights[partY] + padding)
+						int frameY = 0;
+						while (yPart >= heights[frameY] + padding)
 						{
-							yPart -= heights[partY] + padding;
-							partY++;
-							partY %= tileData.Height;
+							yPart -= heights[frameY] + padding;
+							frameY++;
+							frameY %= tileData.Height;
+						}
+
+						if ((frameY == 0 && yPart < 2) || 
+							(frameY == tileData.Height - 1 && yPart >= heights[frameY] - 2))
+						{
+							isHighlight = true;
+							goto END;
 						}
 
 						int u1Index = index - origTex.Width;
@@ -82,12 +101,14 @@ internal static class TileOutlineHelper
 
 						int d1Index = index + origTex.Width;
 						int d2Index = index + (2 * origTex.Width);
-						if (yPart + 1 >= heights[partY]) d1Index += padding * origTex.Width;
-						if (yPart + 2 >= heights[partY]) d2Index += padding * origTex.Width;
+						if (yPart + 1 >= heights[frameY]) d1Index += padding * origTex.Width;
+						if (yPart + 2 >= heights[frameY]) d2Index += padding * origTex.Width;
 
 						if (origTexData[u1Index].A == 0 || origTexData[u2Index].A == 0 ||
 						origTexData[d1Index].A == 0 || origTexData[d2Index].A == 0)
 							isHighlight = true;
+
+						END:;
 					}
 					if (isHighlight)
 						newTexData[index] = new Color(252, 252, 252);
