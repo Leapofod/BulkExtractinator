@@ -38,11 +38,10 @@ internal static class ExtractionHelper
 		if (!_justExtractedItem.IsAir)
 		{
 			successfulExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
-
 			if (!limitToAvailableSpace)
 			{
-				// add to drop queue.
-				//successfulExtract = true;
+				EnqueueItem(ref _justExtractedItem);
+				successfulExtract = true;
 			}
 		}
 
@@ -64,8 +63,8 @@ internal static class ExtractionHelper
 
 			if (!limitToAvailableSpace)
 			{
-				//didExtract = true;
-				// add to drop queue.
+				EnqueueItem(ref _justExtractedItem);
+				didExtract = true;
 			}
 
 			if (didExtract)
@@ -77,6 +76,7 @@ internal static class ExtractionHelper
 
 		modPlr.RemainderExtractedItem = _justExtractedItem.Clone();
 		AnnounceAquiredItems(player);
+		DropQueuedItems(player);
 		return successfulExtract;
 	}
 
@@ -212,12 +212,48 @@ internal static class ExtractionHelper
 			_aquiredToVoidVault.Add(type, stack);
 	}
 
-	internal static void EnqueueItem(int Type, int Stack)
+	internal static void DropQueuedItems(Player player)
 	{
-		if (_toDropItems.ContainsKey(Type))
-			_toDropItems[Type] += Stack;
+		var dropPosition = player.Center;
+		var openExtractinatorPos = dropPosition;
+		if (player.TryGetModPlayer<ExtractinatorPlayer>(out var mPlr))
+			openExtractinatorPos = mPlr.CurrentOpenExtractinator.Center.ToVector2();
+		foreach (var itemType in _toDropItems.Keys)
+		{
+			var item = new Item(itemType, _toDropItems[itemType]);
+			while (item.stack > 0)
+			{
+				int stackToDrop = (int)MathHelper.Min(item.maxStack, item.stack);
+				item.stack -= stackToDrop;
+				var newItem = Item.NewItem(player.GetSource_TileInteraction((int)openExtractinatorPos.X, (int)openExtractinatorPos.Y), 
+					dropPosition, Vector2.Zero, itemType, stackToDrop, false, -1, true);
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+					NetMessage.SendData(MessageID.SyncItem, -1, -1, null, newItem, 1f);
+			}
+		}
+		_toDropItems.Clear();
+	}
+
+	internal static void EnqueueItem(ref Item item)
+	{
+		if (item.IsAir)
+			return;
+		if (_toDropItems.ContainsKey(item.type))
+			_toDropItems[item.type] += item.stack;
 		else
-			_toDropItems.Add(Type, Stack);
+			_toDropItems.Add(item.type, item.stack);
+		
+		item.TurnToAir();
+	}
+
+	internal static void EnqueueItem(int type, int stack)
+	{
+		if (type <= 0 || stack <= 0)
+			return;
+		if (_toDropItems.ContainsKey(type))
+			_toDropItems[type] += stack;
+		else
+			_toDropItems.Add(type, stack);
 	}
 
 	private static int FindExistingOrEmptyStack(Item[] inventory, int type, out bool existingStack)

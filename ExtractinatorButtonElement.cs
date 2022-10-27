@@ -32,7 +32,9 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		if (evt.Target != this)
 			return;
 
-		var res = ExtractionHelper.MassExtract(Main.LocalPlayer, true);
+		bool limitToInventory = Main.LocalPlayer.TryGetModPlayer<ExtractinatorPlayer>(out var mPlr) && mPlr.LimitExtractToInventory;
+
+		var res = ExtractionHelper.MassExtract(Main.LocalPlayer, limitToInventory);
 		if (res)
 			SoundEngine.PlaySound(in SoundID.Grab);
 	}
