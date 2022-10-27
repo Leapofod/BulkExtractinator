@@ -9,21 +9,22 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractUIState : UIState
 {
+	private const int XPOS = 120;
+	private const int YPOS = 290;
+
 	ExtractModeButtonElement extractModeButton;
 
 	public override void OnInitialize()
 	{
 		var extractButton = new ExtractinatorButtonElement();
-		extractButton.Left.Set(170, 0f);
-		extractButton.Top.Set(290, 0f);
+		extractButton.Left.Set(XPOS + 50, 0f);
+		extractButton.Top.Set(YPOS, 0f);
 		Append(extractButton);
 
 		extractModeButton = new ExtractModeButtonElement();
-		extractModeButton.Left.Set(110, 0);
-		extractModeButton.Top.Set(280, 0);
+		extractModeButton.Left.Set(XPOS - 10, 0);
+		extractModeButton.Top.Set(YPOS - 10, 0);
 		Append(extractModeButton);
-
-
 	}
 
 	protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -36,14 +37,14 @@ internal sealed class ExtractUIState : UIState
 		var oldScale = Main.inventoryScale;
 		Main.inventoryScale = /*0.755f;*/ 0.85f;
 
-		int xPos = 120;
-		int yPos = 290;
+		//int xPos = 120;
+		//int yPos = 290;
 
-		if(player.TryGetModPlayer<ExtractinatorPlayer>(out var extractinatorPlr))
+		if (player.TryGetModPlayer<ExtractinatorPlayer>(out var extractinatorPlr))
 		{
 			ref Item item = ref extractinatorPlr.ExtractinatorSlotItem;
 
-			if (Utils.FloatIntersect(Main.mouseX, Main.mouseY, 0, 0, xPos, yPos,
+			if (Utils.FloatIntersect(Main.mouseX, Main.mouseY, 0, 0, XPOS, YPOS,
 				TextureAssets.InventoryBack6.Width() * Main.inventoryScale,
 				TextureAssets.InventoryBack6.Height() * Main.inventoryScale)
 				&& !extractModeButton.IsMouseHovering)
@@ -60,7 +61,10 @@ internal sealed class ExtractUIState : UIState
 				player.mouseInterface = true;
 			}
 
-			ItemSlot.Draw(spriteBatch, ref item, ItemSlot.Context.PrefixItem, new Vector2(xPos, yPos));
+			if (item.IsAir)
+				Utils.DrawBorderStringFourWay(spriteBatch, FontAssets.MouseText.Value, Terraria.Localization.Language.GetTextValue("Mods.BulkExtractinator.InsertToExtractinator"), XPOS + 60, YPOS, Color.White, Color.Black, Vector2.Zero);
+			
+			ItemSlot.Draw(spriteBatch, ref item, ItemSlot.Context.PrefixItem, new Vector2(XPOS, YPOS));
 		}
 		Main.inventoryScale = oldScale;
 	}

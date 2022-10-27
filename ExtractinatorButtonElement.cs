@@ -51,7 +51,7 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		if (IsMouseHovering)
 		{
 			Main.LocalPlayer.mouseInterface = true;
-			Main.hoverItemName = Language.GetTextValue("Mods.BulkExtractinator.UI.ExtractUntilFull");
+			//Main.hoverItemName = Language.GetTextValue("Mods.BulkExtractinator.UI.ExtractUntilFull");
 		}
 	}
 }
