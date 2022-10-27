@@ -18,13 +18,8 @@ internal sealed class ExtractinatorButtonElement : UIElement
 	{
 		OnMouseDown += HandlePress;
 
-		// check if redundant later
 		Width.Set(TextureAssets.Reforge[0].Value.Width + 16f, 0f);
 		Height.Set(TextureAssets.Reforge[0].Value.Height + 16f, 0f);
-		//SetPadding(40f);
-
-		// MaxWidth.Set(TextureAssets.Reforge[1].Value.Width, 0f);
-		// MaxHeight.Set(TextureAssets.Reforge[1].Value.Height, 0f);
 	}
 
 	private void HandlePress(UIMouseEvent evt, UIElement listeningElement)

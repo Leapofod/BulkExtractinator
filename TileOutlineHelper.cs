@@ -115,7 +115,6 @@ internal static class TileOutlineHelper
 				}
 			}
 
-			// this works and adds the texture properly but it isn't using it
 			var newTex = new Texture2D(Main.graphics.GraphicsDevice, origTex.Width, origTex.Height);
 			newTex.SetData(newTexData);
 
