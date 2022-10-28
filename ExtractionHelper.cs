@@ -14,8 +14,6 @@ internal static class ExtractionHelper
 	private static readonly Dictionary<int, int> _aquiredToInventory;
 	private static readonly Dictionary<int, int> _aquiredToVoidVault;
 
-	//private static Item _justExtractedItem;
-
 	private static List<Item> _justExtractedItems2;
 
 	static ExtractionHelper()
@@ -56,25 +54,12 @@ internal static class ExtractionHelper
 			_justExtractedItems2.RemoveAll(i => i.IsAir);
 		}
 
-		//_justExtractedItem = modPlr.RemainderExtractedItem.Clone();
-		//modPlr.RemainderExtractedItem.TurnToAir();
-
-		//if (!_justExtractedItem.IsAir)
-		//{
-		//	successfulExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
-		//	if (!limitToAvailableSpace)
-		//	{
-		//		EnqueueItem(ref _justExtractedItem);
-		//		successfulExtract = true;
-		//	}
-		//}
-
 		var p_extractinatorUse = player.GetType().GetMethod("ExtractinatorUse",
 			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-		while (!extractionFuel.IsAir /*&& _justExtractedItem.IsAir*/ && _justExtractedItems2.Count == 0)
+		while (!extractionFuel.IsAir && _justExtractedItems2.Count == 0)
 		{
 			ShouldInterceptNewItem = true;
-			p_extractinatorUse.Invoke(player, new object[] { /*extractionFuel.type*/ extractType });
+			p_extractinatorUse.Invoke(player, new object[] { extractType });
 			ShouldInterceptNewItem = false;
 
 			if (_justExtractedItems2.TrueForAll(i => i.IsAir))
@@ -82,12 +67,6 @@ internal static class ExtractionHelper
 				extractionFuel.stack--;
 				continue;
 			}
-
-			//if (_justExtractedItem.IsAir)
-			//{
-			//	extractionFuel.stack--;
-			//	continue;
-			//}
 
 			bool didExtract = false;
 			for (int i = 0; i < _justExtractedItems2.Count; i++)
@@ -104,14 +83,6 @@ internal static class ExtractionHelper
 			}
 			_justExtractedItems2.RemoveAll(i => i.IsAir);
 
-			//var didExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
-
-			//if (!limitToAvailableSpace)
-			//{
-			//	EnqueueItem(ref _justExtractedItem);
-			//	didExtract = true;
-			//}
-
 			if (didExtract)
 			{
 				extractionFuel.stack--;
@@ -119,7 +90,6 @@ internal static class ExtractionHelper
 			}
 		}
 
-		//modPlr.RemainderExtractedItem = _justExtractedItem.Clone();
 		modPlr.ExtractinatorBacklog[extractType] = _justExtractedItems2;
 		AnnounceAquiredItems(player);
 		DropQueuedItems(player);
@@ -129,7 +99,6 @@ internal static class ExtractionHelper
 	internal static void OnNewItemIntercept(int Type, int Stack)
 	{
 		var extractedItem = new Item(Type, Stack);
-		//_justExtractedItem = extractedItem;
 		_justExtractedItems2.Add(extractedItem);
 	}
 
