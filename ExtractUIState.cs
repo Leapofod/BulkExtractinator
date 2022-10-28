@@ -9,8 +9,8 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractUIState : UIState
 {
-	private const int XPOS = 120;
-	private const int YPOS = 290;
+	private const int XPOS = 100; // 120
+	private const int YPOS = 270; // 290
 
 	ExtractModeButtonElement extractModeButton;
 

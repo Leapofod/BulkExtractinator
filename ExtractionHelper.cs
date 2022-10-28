@@ -14,58 +14,103 @@ internal static class ExtractionHelper
 	private static readonly Dictionary<int, int> _aquiredToInventory;
 	private static readonly Dictionary<int, int> _aquiredToVoidVault;
 
-	private static Item _justExtractedItem;
+	//private static Item _justExtractedItem;
+
+	private static List<Item> _justExtractedItems2;
 
 	static ExtractionHelper()
 	{
 		_toDropItems = new Dictionary<int, int>();
 		_aquiredToInventory = new Dictionary<int, int>();
 		_aquiredToVoidVault = new Dictionary<int, int>();
+
+		_justExtractedItems2 = new List<Item>();
 	}
 
 	internal static bool MassExtract(Player player, bool limitToAvailableSpace)
 	{
-		ExtractinatorPlayer modPlr;
-		if (!player.TryGetModPlayer(out modPlr) || modPlr.ExtractinatorSlotItem.IsAir)
+		if (!player.TryGetModPlayer(out ExtractinatorPlayer modPlr) || modPlr.ExtractinatorSlotItem.IsAir)
+			return false;
+
+		int extractType = ItemID.Sets.ExtractinatorMode[modPlr.ExtractinatorSlotItem.type];
+		if (extractType < 0)
 			return false;
 
 		ref var extractionFuel = ref modPlr.ExtractinatorSlotItem;
 		bool successfulExtract = false;
 
-		_justExtractedItem = modPlr.RemainderExtractedItem.Clone();
-		modPlr.RemainderExtractedItem.TurnToAir();
-
-		if (!_justExtractedItem.IsAir)
+		if (modPlr.ExtractinatorBacklog.ContainsKey(extractType))
 		{
-			successfulExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
-			if (!limitToAvailableSpace)
+			modPlr.ExtractinatorBacklog.Remove(extractType, out _justExtractedItems2);
+			for (int i = 0; i < _justExtractedItems2.Count; i++)
 			{
-				EnqueueItem(ref _justExtractedItem);
-				successfulExtract = true;
+				var backlogItem = _justExtractedItems2[i];
+				successfulExtract |= InsertToPlayerContainer(player, ref backlogItem);
+				if (!limitToAvailableSpace)
+				{
+					EnqueueItem(ref backlogItem);
+					successfulExtract = true;
+				}
+				_justExtractedItems2[i] = backlogItem;
 			}
+			_justExtractedItems2.RemoveAll(i => i.IsAir);
 		}
+
+		//_justExtractedItem = modPlr.RemainderExtractedItem.Clone();
+		//modPlr.RemainderExtractedItem.TurnToAir();
+
+		//if (!_justExtractedItem.IsAir)
+		//{
+		//	successfulExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
+		//	if (!limitToAvailableSpace)
+		//	{
+		//		EnqueueItem(ref _justExtractedItem);
+		//		successfulExtract = true;
+		//	}
+		//}
 
 		var p_extractinatorUse = player.GetType().GetMethod("ExtractinatorUse",
 			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-		while (!extractionFuel.IsAir && _justExtractedItem.IsAir)
+		while (!extractionFuel.IsAir /*&& _justExtractedItem.IsAir*/ && _justExtractedItems2.Count == 0)
 		{
 			ShouldInterceptNewItem = true;
-			p_extractinatorUse.Invoke(player, new object[] { extractionFuel.type });
+			p_extractinatorUse.Invoke(player, new object[] { /*extractionFuel.type*/ extractType });
 			ShouldInterceptNewItem = false;
 
-			if (_justExtractedItem.IsAir)
+			if (_justExtractedItems2.TrueForAll(i => i.IsAir))
 			{
 				extractionFuel.stack--;
 				continue;
 			}
 
-			var didExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
+			//if (_justExtractedItem.IsAir)
+			//{
+			//	extractionFuel.stack--;
+			//	continue;
+			//}
 
-			if (!limitToAvailableSpace)
+			bool didExtract = false;
+			for (int i = 0; i < _justExtractedItems2.Count; i++)
 			{
-				EnqueueItem(ref _justExtractedItem);
-				didExtract = true;
+				var newItem = _justExtractedItems2[i];
+				didExtract |= InsertToPlayerContainer(player, ref newItem);
+				
+				if (!limitToAvailableSpace)
+				{
+					EnqueueItem(ref newItem);
+					didExtract = true;
+				}
+				_justExtractedItems2[i] = newItem;
 			}
+			_justExtractedItems2.RemoveAll(i => i.IsAir);
+
+			//var didExtract = InsertToPlayerContainer(player, ref _justExtractedItem);
+
+			//if (!limitToAvailableSpace)
+			//{
+			//	EnqueueItem(ref _justExtractedItem);
+			//	didExtract = true;
+			//}
 
 			if (didExtract)
 			{
@@ -74,7 +119,8 @@ internal static class ExtractionHelper
 			}
 		}
 
-		modPlr.RemainderExtractedItem = _justExtractedItem.Clone();
+		//modPlr.RemainderExtractedItem = _justExtractedItem.Clone();
+		modPlr.ExtractinatorBacklog[extractType] = _justExtractedItems2;
 		AnnounceAquiredItems(player);
 		DropQueuedItems(player);
 		return successfulExtract;
@@ -83,7 +129,8 @@ internal static class ExtractionHelper
 	internal static void OnNewItemIntercept(int Type, int Stack)
 	{
 		var extractedItem = new Item(Type, Stack);
-		_justExtractedItem = extractedItem;
+		//_justExtractedItem = extractedItem;
+		_justExtractedItems2.Add(extractedItem);
 	}
 
 
@@ -244,16 +291,6 @@ internal static class ExtractionHelper
 			_toDropItems.Add(item.type, item.stack);
 		
 		item.TurnToAir();
-	}
-
-	internal static void EnqueueItem(int type, int stack)
-	{
-		if (type <= 0 || stack <= 0)
-			return;
-		if (_toDropItems.ContainsKey(type))
-			_toDropItems[type] += stack;
-		else
-			_toDropItems.Add(type, stack);
 	}
 
 	private static int FindExistingOrEmptyStack(Item[] inventory, int type, out bool existingStack)

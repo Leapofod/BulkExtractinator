@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
@@ -16,14 +17,17 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 	public Rectangle CurrentOpenExtractinator;
 
 	public Item ExtractinatorSlotItem;
-	public Item RemainderExtractedItem;
+	//public Item RemainderExtractedItem;
+	public readonly Dictionary<int, List<Item>> ExtractinatorBacklog;
 
 	public bool LimitExtractToInventory;
 
 	public ExtractinatorPlayer()
 	{
 		ExtractinatorSlotItem = new Item();
-		RemainderExtractedItem = new Item();
+		//RemainderExtractedItem = new Item();
+
+		ExtractinatorBacklog = new Dictionary<int, List<Item>>();
 
 		LimitExtractToInventory = false;
 	}
@@ -69,8 +73,8 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 		if (!ExtractinatorSlotItem.IsAir)
 			tag["LastExtractinatorItem"] = ExtractinatorSlotItem;
 
-		if (!RemainderExtractedItem.IsAir)
-			tag["RemainderExtractedItem"] = RemainderExtractedItem;
+		//if (!RemainderExtractedItem.IsAir)
+		//	tag["RemainderExtractedItem"] = RemainderExtractedItem;
 
 		if (LimitExtractToInventory)
 			tag["LimitExtractToInventory"] = true;
@@ -81,8 +85,8 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 		if (tag.TryGet<Item>("LastExtractinatorItem", out var lastExtractinatorItem) && !lastExtractinatorItem.IsAir)
 			ExtractinatorSlotItem = lastExtractinatorItem;
 
-		if (tag.TryGet<Item>("RemainderExtractedItem", out var remainderItem) && !remainderItem.IsAir)
-			RemainderExtractedItem = remainderItem;
+		//if (tag.TryGet<Item>("RemainderExtractedItem", out var remainderItem) && !remainderItem.IsAir)
+		//	RemainderExtractedItem = remainderItem;
 
 		if (tag.TryGet<bool>("LimitExtractToInventory", out var limitToInventory))
 			LimitExtractToInventory = limitToInventory;
