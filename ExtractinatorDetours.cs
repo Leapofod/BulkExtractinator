@@ -1,4 +1,5 @@
-﻿using MonoMod.Cil;
+﻿using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using System;
 using Terraria;
 using Terraria.ModLoader;
@@ -9,90 +10,121 @@ internal sealed class ExtractinatorDetours : ModSystem
 {
 	public override void Load()
 	{
-		On.Terraria.Item.NewItem_IEntitySource_int_int_int_int_int_int_bool_int_bool_bool += BlockItem_NewItem;
-		On.Terraria.NetMessage.SendData += BlockNetMessage_SendData;
-
-		On.Terraria.GameContent.Creative.CreativeUI.Draw += BlockCreativeUI_Draw;
-		On.Terraria.GameContent.Creative.CreativeUI.ToggleMenu += BlockCreativeUI_ToggleMenu;
-
-		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.FillPotentialTargetTiles += IL_FillPotentialTargetTiles;
-		ExtractinatorHooks.OnModifySmartInteractCoords += OnModifySmartInteractCoords;
-		On.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.ProvideCandidate += ProvideCandidateFix;
-	}
-
-	// needs fix
-	private bool ProvideCandidateFix(On.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.orig_ProvideCandidate orig, Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider self, Terraria.GameContent.ObjectInteractions.SmartInteractScanSettings settings, out Terraria.GameContent.ObjectInteractions.ISmartInteractCandidate candidate) => orig(self, settings, out candidate);
-
-	private void OnModifySmartInteractCoords(ExtractinatorHooks.orig_ModifySmartInteractCoords orig, int type, ref int width, ref int height, ref int frameWidth, ref int frameHeight, ref int extraY)
-	{
-		if (!BulkExtractinator.ExtractinatorTiles.Contains(type))
+		On.Terraria.Item.NewItem_IEntitySource_int_int_int_int_int_int_bool_int_bool_bool += (orig, source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup) =>
 		{
-			orig(type, ref width, ref height, ref frameWidth, ref frameHeight, ref extraY);
-			return;
-		}
-
-		var data = Terraria.ObjectData.TileObjectData.GetTileData(type, 0);
-		if (data == null)
-			return;
-
-		width = data.Width;
-		height = data.Height;
-		frameWidth = data.CoordinateWidth + data.CoordinatePadding;
-		frameHeight = data.CoordinateHeights[0] + data.CoordinatePadding;
-		extraY = data.CoordinateFullHeight % frameHeight;
-	}
-
-	private void IL_FillPotentialTargetTiles(ILContext il)
-	{
-		var c = new ILCursor(il);
-		while (c.TryGotoNext(i => i.MatchBrfalse(out _)))
-		{
-			if (c.Prev.MatchCall(out _) && c.Prev.Previous.MatchLdarg(1))
+			if (ExtractionHelper.ShouldInterceptNewItem)
 			{
-				// matches if (TileLoader.HasSmartInteract(i, j, tile.type, settings))
-				// loads local tile variable into stack
-				c.Emit(Mono.Cecil.Cil.OpCodes.Ldloc_2);
-				// evaluate
-				c.EmitDelegate<Func<Tile, bool>>((tile) =>
+				ExtractionHelper.OnNewItemIntercept(Type, Stack);
+				return 0;
+			}
+			return orig(source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup);
+		};
+
+		On.Terraria.NetMessage.SendData += (orig, msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7) =>
+		{ if (!ExtractionHelper.ShouldInterceptNewItem) orig(msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7); };
+
+		On.Terraria.GameContent.Creative.CreativeUI.ToggleMenu += (orig, self) =>
+		{ if (!ExtractinatorPlayer.ExtractinatorOpenLocally) orig(self); };
+
+		
+		
+		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.FillPotentialTargetTiles += (il) =>
+		{
+			var c = new ILCursor(il);
+			while (c.TryGotoNext(i => i.MatchBrfalse(out _)))
+			{
+				if (c.Prev.MatchCall(out _) && c.Prev.Previous.MatchLdarg(1))
 				{
-					return BulkExtractinator.ExtractinatorTiles.Contains(tile.TileType);
-				});
-				// bitwise or with return of TileLoader.HasSmartInteract
-				c.Emit(Mono.Cecil.Cil.OpCodes.Or);
+					// matches if (TileLoader.HasSmartInteract(i, j, tile.type, settings))
+					// loads local tile variable into stack
+					c.Emit(OpCodes.Ldloc_2);
+					// evaluate
+					c.EmitDelegate<Func<Tile, bool>>((tile) =>
+					{
+						return BulkExtractinator.ExtractinatorTiles.Contains(tile.TileType);
+					});
+					// bitwise or with return of TileLoader.HasSmartInteract
+					c.Emit(OpCodes.Or);
+					return;
+				}
+			}
+			throw new Exception("Failed to IL Edit FillPotentialTargetTiles");
+		};
+
+		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.ProvideCandidate += il =>
+		{
+			var c = new ILCursor(il);
+
+			int widthIndex = -1, heightIndex = -1, frameWidthIndex = -1, frameHeightIndex = -1, extraYIndex = -1;
+			int tileIndex = -1;
+			Mono.Cecil.MethodReference getTypeFunc = null;
+
+			/*
+			 * Jumps to
+			 *	TileLoader.ModifySmartInteractCoords(tile.type, ref num7, ref num8, ref num9, ref num10, ref num11);
+			 * and gets all argument indeces
+			 */
+			if (!c.TryGotoNext(MoveType.After,
+				x => x.MatchCall(out _) &&
+				x.Previous.MatchLdloca(out extraYIndex) &&
+				x.Previous.Previous.MatchLdloca(out frameHeightIndex) &&
+				x.Previous.Previous.Previous.MatchLdloca(out frameWidthIndex) &&
+				x.Previous.Previous.Previous.Previous.MatchLdloca(out heightIndex) &&
+				x.Previous.Previous.Previous.Previous.Previous.MatchLdloca(out widthIndex) &&
+				x.Previous.Previous.Previous.Previous.Previous.Previous.MatchLdindU2() &&
+				x.Previous.Previous.Previous.Previous.Previous.Previous.Previous.MatchCall(out getTypeFunc)&&
+				x.Previous.Previous.Previous.Previous.Previous.Previous.Previous.Previous.MatchLdloca(out tileIndex)))
+			{
+				Mod.Logger.Error("TileSmartInteractCandidateProvider::ProvideCandidate");
 				return;
 			}
-		}
-		throw new Exception("Failed to IL Edit FillPotentialTargetTiles");
-	}
 
-	private void BlockCreativeUI_ToggleMenu(On.Terraria.GameContent.Creative.CreativeUI.orig_ToggleMenu orig, Terraria.GameContent.Creative.CreativeUI self)
-	{
-		if (ExtractinatorPlayer.ExtractinatorOpenLocally)
-			return;
-		orig(self);
-	}
+			var skipLabel = c.DefineLabel();
+			c.Emit(OpCodes.Ldloca_S, (byte)tileIndex);
+			c.Emit(OpCodes.Call, getTypeFunc);
+			c.Emit(OpCodes.Ldind_U2);
 
-	private void BlockCreativeUI_Draw(On.Terraria.GameContent.Creative.CreativeUI.orig_Draw orig, Terraria.GameContent.Creative.CreativeUI self, Microsoft.Xna.Framework.Graphics.SpriteBatch spriteBatch)
-	{
-		if (ExtractinatorPlayer.ExtractinatorOpenLocally)
-			return;
-		orig(self, spriteBatch);
-	}
+			c.EmitDelegate<Func<int, bool>>(type =>
+			{
+				ProvideCandidateHelper.CurrentTileType = type;
+				return BulkExtractinator.ExtractinatorTiles?.Contains(type) ?? false;
+			});
+			c.Emit(OpCodes.Brfalse, skipLabel);
 
-	private void BlockNetMessage_SendData(On.Terraria.NetMessage.orig_SendData orig, int msgType, int remoteClient, int ignoreClient, Terraria.Localization.NetworkText text, int number, float number2, float number3, float number4, int number5, int number6, int number7)
-	{
-		if (ExtractionHelper.ShouldInterceptNewItem)
-			return;
-		orig(msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7);
-	}
+			c.EmitDelegate(() =>
+			{
+				ProvideCandidateHelper.CurrentObjectData = Terraria.ObjectData.TileObjectData.GetTileData(ProvideCandidateHelper.CurrentTileType, 0);
+				return ProvideCandidateHelper.CurrentObjectData is null;
+			});
+			c.Emit(OpCodes.Brtrue, skipLabel);
 
-	private int BlockItem_NewItem(On.Terraria.Item.orig_NewItem_IEntitySource_int_int_int_int_int_int_bool_int_bool_bool orig, Terraria.DataStructures.IEntitySource source, int X, int Y, int Width, int Height, int Type, int Stack, bool noBroadcast, int pfix, bool noGrabDelay, bool reverseLookup)
-	{
-		if (ExtractionHelper.ShouldInterceptNewItem)
-		{
-			ExtractionHelper.OnNewItemIntercept(Type, Stack);
-			return 0;
-		}
-		return orig(source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup);
-	}
+			c.EmitDelegate(() => ProvideCandidateHelper.CurrentObjectWidth);
+			c.EmitDelegate(() => ProvideCandidateHelper.CurrentObjectHeight);
+			c.EmitDelegate(() => ProvideCandidateHelper.CurrentObjectFrameWidth);
+			c.EmitDelegate(() => ProvideCandidateHelper.CurrentObjectFrameHeight);
+			c.EmitDelegate(() => ProvideCandidateHelper.CurrentObjectExtraY);
+			c.Emit(OpCodes.Stloc_S, (byte)extraYIndex);
+			c.Emit(OpCodes.Stloc_S, (byte)frameHeightIndex);
+			c.Emit(OpCodes.Stloc_S, (byte)frameWidthIndex);
+			c.Emit(OpCodes.Stloc_S, (byte)heightIndex);
+			c.Emit(OpCodes.Stloc_S, (byte)widthIndex);
+
+			c.MarkLabel(skipLabel);
+
+			/* Basically Adds
+			 *	if (BulkExtractinator.ExtractinatorTiles.Contains(type))
+			 *	{
+			 *		var data = Terraria.ObjectData.TileObjectData.GetTileData(type, 0);
+			 *		if (data != null)
+			 *		{	
+			 *			width = data.Width;
+			 *			height = data.Height;
+			 *			frameWidth = data.CoordinateWidth + data.CoordinatePadding;
+			 *			frameHeight = data.CoordinateHeights[0] + data.CoordinatePadding;
+			 *			extraY = data.CoordinateFullHeight % frameHeight;
+			 *		}
+			 *	}
+			 */
+		};
+	}	
 }
