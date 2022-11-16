@@ -124,7 +124,7 @@ internal static class ExtractionHelper
 
 	private static bool InsertToPlayerContainer(Player player, ref Item itemToInsert)
 	{
-		if (itemToInsert.IsAir)
+		if (itemToInsert.IsAir || !player.CanAcceptItemIntoInventory(itemToInsert))
 			return false;
 		var spaceStatus = player.ItemSpace(itemToInsert);
 		bool inserted = false;
@@ -136,12 +136,15 @@ internal static class ExtractionHelper
 				inserted = InsertToInventory(player.inventory, ref itemToInsert, 54, 4) || inserted;
 			AddItemAquiredToInventory(origItem.type, origItem.stack - itemToInsert.stack);
 		}
-		spaceStatus = player.ItemSpace(itemToInsert);
-		if (spaceStatus.ItemIsGoingToVoidVault)
+		if (!itemToInsert.IsAir)
 		{
-			var origItem = itemToInsert.Clone();
-			inserted = InsertToInventory(player.bank4.item, ref itemToInsert, 0, 50) || inserted;
-			AddItemAquiredToVoidVault(origItem.type, origItem.stack - itemToInsert.stack);
+			spaceStatus = player.ItemSpace(itemToInsert);
+			if (spaceStatus.ItemIsGoingToVoidVault)
+			{
+				var origItem = itemToInsert.Clone();
+				inserted = InsertToInventory(player.bank4.item, ref itemToInsert, 0, 50) || inserted;
+				AddItemAquiredToVoidVault(origItem.type, origItem.stack - itemToInsert.stack);
+			}
 		}
 
 		return inserted;
@@ -164,7 +167,7 @@ internal static class ExtractionHelper
 			{
 				inv[slot].SetDefaults(itemToInsert.type);
 				inv[slot].newAndShiny = true;
-				itemToInsert.stack--;
+				inv[slot].stack = 0;
 			}
 			int slotCapLeft = inv[slot].maxStack - inv[slot].stack;
 			int amountToMove = (int)MathHelper.Min(slotCapLeft, itemToInsert.stack);
@@ -187,8 +190,9 @@ internal static class ExtractionHelper
 
 	private static void SortCoinsInInv(Item[] inv, int startIndex, int slotCount)
 	{
-		var queryInv = inv[startIndex..(int)MathHelper.Min(inv.Length, startIndex + slotCount)];
-		for (int i = startIndex; i < queryInv.Length + startIndex; i++)
+		//var queryInv = inv[startIndex..(int)MathHelper.Min(inv.Length, startIndex + slotCount)];
+		var queryEnd = (int)MathHelper.Min(inv.Length, startIndex + slotCount);
+		for (int i = startIndex; i < queryEnd; i++)
 		{
 			if (inv[i].IsAir || !inv[i].IsACoin || inv[i].type == ItemID.PlatinumCoin)
 				continue;
@@ -196,7 +200,7 @@ internal static class ExtractionHelper
 			if (inv[i].stack == inv[i].maxStack)
 			{
 				inv[i].SetDefaults(inv[i].type + 1);
-				for (int j = startIndex; j < queryInv.Length + startIndex; j++)
+				for (int j = startIndex; j < queryEnd; j++)
 				{
 					if (j != i && inv[j].type == inv[i].type && !inv[j].IsAir && inv[j].stack < inv[j].maxStack)
 					{
@@ -231,9 +235,9 @@ internal static class ExtractionHelper
 	internal static void DropQueuedItems(Player player)
 	{
 		var dropPosition = player.Center;
-		var openExtractinatorPos = dropPosition;
+		var openExtractinatorPos = dropPosition.ToPoint16();
 		if (player.TryGetModPlayer<ExtractinatorPlayer>(out var mPlr))
-			openExtractinatorPos = mPlr.CurrentOpenExtractinator.Center.ToVector2();
+			openExtractinatorPos = mPlr.CurrentOpenExtractinator.Center.ToVector2().ToPoint16();
 		foreach (var itemType in _toDropItems.Keys)
 		{
 			var item = new Item(itemType, _toDropItems[itemType]);
@@ -241,7 +245,7 @@ internal static class ExtractionHelper
 			{
 				int stackToDrop = (int)MathHelper.Min(item.maxStack, item.stack);
 				item.stack -= stackToDrop;
-				var newItem = Item.NewItem(player.GetSource_TileInteraction((int)openExtractinatorPos.X, (int)openExtractinatorPos.Y), 
+				var newItem = Item.NewItem(player.GetSource_TileInteraction(openExtractinatorPos.X, openExtractinatorPos.Y), 
 					dropPosition, Vector2.Zero, itemType, stackToDrop, false, -1, true);
 				if (Main.netMode == NetmodeID.MultiplayerClient)
 					NetMessage.SendData(MessageID.SyncItem, -1, -1, null, newItem, 1f);
@@ -284,6 +288,4 @@ internal static class ExtractionHelper
 		else
 			return lastEmptySlot;
 	}
-
-	// redo the system
 }
