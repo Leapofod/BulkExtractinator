@@ -29,9 +29,6 @@ internal sealed class ExtractinatorTile : GlobalTile
 
 			var multitileRect = new Rectangle(i - partX, j - partY, tileData.Width, tileData.Height);
 
-			// debug
-			//Main.NewText(multitileRect.ToString());
-
 			if (Main.player[Main.myPlayer].TryGetModPlayer<ExtractinatorPlayer>(out var modPlr))
 			{
 				if (modPlr.CurrentOpenExtractinator == multitileRect)
@@ -44,10 +41,7 @@ internal sealed class ExtractinatorTile : GlobalTile
 				else
 				{
 					modPlr.CurrentOpenExtractinator = multitileRect;
-					if (!modPlr.HasExtractinatorOpen)
-						modPlr.OpenExtractinator();
-					else // find better place to put this
-						Terraria.Audio.SoundEngine.PlaySound(in Terraria.ID.SoundID.MenuTick);
+					modPlr.OpenExtractinator();
 				}
 			}
 		}

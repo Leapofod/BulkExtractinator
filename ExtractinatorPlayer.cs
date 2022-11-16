@@ -33,7 +33,7 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 	{
 		if (HasExtractinatorOpen)
 		{
-			var playerCenterTile = Player.Center / 16;
+			var playerCenterTile = Player.Center.ToTileCoordinates16();
 			if (playerCenterTile.X < CurrentOpenExtractinator.X - Player.tileRangeX
 				|| playerCenterTile.X > CurrentOpenExtractinator.X + CurrentOpenExtractinator.Width + 
 				Player.tileRangeX
@@ -120,20 +120,24 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 
 	public void OpenExtractinator()
 	{
+		if (!HasExtractinatorOpen)
+			SoundEngine.PlaySound(in SoundID.MenuOpen);
+		else
+			SoundEngine.PlaySound(in SoundID.MenuTick);
+
 		HasExtractinatorOpen = true;
 		Main.CreativeMenu.CloseMenu();
 		Main.SetNPCShopIndex(0);
 		Player.SetTalkNPC(-1);
 		Player.chest = -1;
 		Main.playerInventory = true;
-		SoundEngine.PlaySound(in SoundID.MenuOpen);
 	}
 
 	public void CloseExtractinator(bool silent = false)
 	{
 		HasExtractinatorOpen = false;
 		DropExtractinatorItem();
-		if (silent)
+		if (!silent)
 			SoundEngine.PlaySound(in SoundID.MenuClose);
 	}
 

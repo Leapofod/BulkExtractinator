@@ -121,6 +121,7 @@ internal static class TileOutlineHelper
 			var assetPath = $"Tiles\\Extractinator\\Tile_{tileType}_Highlight";
 			assetPath = assetPath.Replace('\\', System.IO.Path.DirectorySeparatorChar);
 
+			// Thanks Gabe
 			var assetCtor = typeof(Asset<Texture2D>).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)[0];
 			var assetSetLoaded = typeof(Asset<Texture2D>).GetMethod("SubmitLoadedContent", BindingFlags.NonPublic | BindingFlags.Instance);
 

@@ -4,7 +4,6 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
-using Terraria.Localization;
 using Terraria.UI;
 
 namespace BulkExtractinator;
@@ -46,9 +45,6 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		spriteBatch.Draw(tex, GetViewCullingArea().Center(), null, Color.White, 0f, tex.Size() / 2f, 1f, SpriteEffects.None, 0f);
 
 		if (IsMouseHovering)
-		{
 			Main.LocalPlayer.mouseInterface = true;
-			//Main.hoverItemName = Language.GetTextValue("Mods.BulkExtractinator.UI.ExtractUntilFull");
-		}
 	}
 }

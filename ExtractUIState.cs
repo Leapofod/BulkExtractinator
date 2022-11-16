@@ -9,8 +9,8 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractUIState : UIState
 {
-	private const int XPOS = 100; // 120
-	private const int YPOS = 270; // 290
+	private const int XPOS = 100;
+	private const int YPOS = 270;
 
 	ExtractModeButtonElement extractModeButton;
 
@@ -35,10 +35,7 @@ internal sealed class ExtractUIState : UIState
 		var player = Main.player[Main.myPlayer];
 
 		var oldScale = Main.inventoryScale;
-		Main.inventoryScale = /*0.755f;*/ 0.85f;
-
-		//int xPos = 120;
-		//int yPos = 290;
+		Main.inventoryScale = 0.85f;
 
 		if (player.TryGetModPlayer<ExtractinatorPlayer>(out var extractinatorPlr))
 		{
