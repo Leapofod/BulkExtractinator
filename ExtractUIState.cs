@@ -49,7 +49,7 @@ internal sealed class ExtractUIState : UIState
 				ItemSlot.OverrideHover(ref item, ItemSlot.Context.ChestItem);
 				if (Main.mouseItem.IsAir
 					|| ItemSlot.ControlInUse || ItemSlot.ShiftInUse
-					|| ItemID.Sets.ExtractinatorMode[player.HeldItem.type] >= 0)
+					|| ItemID.Sets.ExtractinatorMode[Main.mouseItem.type] >= 0)
 				{
 					ItemSlot.LeftClick(ref item, ItemSlot.Context.ChestItem);
 					ItemSlot.RightClick(ref item, ItemSlot.Context.ChestItem);
