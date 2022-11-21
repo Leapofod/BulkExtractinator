@@ -3,3 +3,6 @@
 
 Usage:
 Open any Extractinator like a chest and insert the silt like items into the given slot and press the extract button
+
+If you have any issues or want to discuss about the mod you can head over to the discord at:
+[c/70B7FC:https://discord.gg/2QTmQsFpUT]

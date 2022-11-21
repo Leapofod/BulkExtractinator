@@ -1,0 +1,8 @@
+﻿Mods: {
+	BulkExtractinator: {
+		InsertToExtractinator: Inserta objetos para extraer
+		
+		LimitsToInventory: Detiene la extracción te quedas sin espacio en el inventario
+		IgnoresInventory: Extrae todo sin importar el espacio restante en el inventario
+	}
+}
