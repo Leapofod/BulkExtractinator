@@ -12,12 +12,13 @@ public class BulkExtractinator : Mod
 	public override void Load()
 	{
 		ExtractinatorTiles = new List<int>(new int[] { TileID.Extractinator });
-		Main.AssetSourceController.OnResourcePackChange += OnResourcePackChange;
+		if (!Main.dedServ)
+			Main.AssetSourceController.OnResourcePackChange += OnResourcePackChange;
 	}
 
 	private void OnResourcePackChange(Terraria.IO.ResourcePackList obj)
 	{
-		foreach(var tile in ExtractinatorTiles)
+		foreach (var tile in ExtractinatorTiles)
 			TileOutlineHelper.RegisterHighlightTexture(tile);
 	}
 
@@ -28,7 +29,7 @@ public class BulkExtractinator : Mod
 
 	public override object Call(params object[] args)
 	{
-		if (args[0].ToString() == "AddExtractinatorTileID") 
+		if (args[0].ToString() == "AddExtractinatorTileID")
 		{
 			if (int.TryParse(args[1].ToString(), out int newTileID))
 			{
