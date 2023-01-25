@@ -51,8 +51,8 @@ internal sealed class ExtractUIState : UIState
 					|| ItemSlot.ControlInUse || ItemSlot.ShiftInUse
 					|| ItemID.Sets.ExtractinatorMode[Main.mouseItem.type] >= 0)
 				{
-					ItemSlot.LeftClick(ref item, ItemSlot.Context.ChestItem);
-					ItemSlot.RightClick(ref item, ItemSlot.Context.ChestItem);
+					ItemSlot.LeftClick(ref item, ItemSlot.Context.InventoryItem);
+					ItemSlot.RightClick(ref item, ItemSlot.Context.InventoryItem);
 				}
 				ItemSlot.MouseHover(ref item, ItemSlot.Context.ChestItem);
 				player.mouseInterface = true;
