@@ -83,7 +83,7 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 			LimitExtractToInventory = limitToInventory;
 	}
 
-	public override void OnEnterWorld(Player player)
+	public override void OnEnterWorld()
 	{
 		DropExtractinatorItem();
 	}

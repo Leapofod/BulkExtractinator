@@ -15,7 +15,7 @@ internal sealed class ExtractinatorButtonElement : UIElement
 
 	public override void OnInitialize()
 	{
-		OnMouseDown += HandlePress;
+		OnLeftMouseDown += HandlePress;
 
 		Width.Set(TextureAssets.Reforge[0].Value.Width + 16f, 0f);
 		Height.Set(TextureAssets.Reforge[0].Value.Height + 16f, 0f);

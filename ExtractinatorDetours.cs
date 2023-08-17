@@ -10,7 +10,7 @@ internal sealed class ExtractinatorDetours : ModSystem
 {
 	public override void Load()
 	{
-		On.Terraria.Item.NewItem_IEntitySource_int_int_int_int_int_int_bool_int_bool_bool += (orig, source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup) =>
+		On_Item.NewItem_IEntitySource_int_int_int_int_int_int_bool_int_bool_bool += (orig, source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup) =>
 		{
 			if (ExtractionHelper.ShouldInterceptNewItem)
 			{
@@ -20,15 +20,15 @@ internal sealed class ExtractinatorDetours : ModSystem
 			return orig(source, X, Y, Width, Height, Type, Stack, noBroadcast, pfix, noGrabDelay, reverseLookup);
 		};
 
-		On.Terraria.NetMessage.SendData += (orig, msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7) =>
+		On_NetMessage.SendData += (orig, msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7) =>
 		{ if (!ExtractionHelper.ShouldInterceptNewItem) orig(msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7); };
 
-		On.Terraria.GameContent.Creative.CreativeUI.ToggleMenu += (orig, self) =>
+		Terraria.GameContent.Creative.On_CreativeUI.ToggleMenu += (orig, self) =>
 		{ if (!ExtractinatorPlayer.ExtractinatorOpenLocally) orig(self); };
 
 		
 		
-		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.FillPotentialTargetTiles += (il) =>
+		Terraria.GameContent.ObjectInteractions.IL_TileSmartInteractCandidateProvider.FillPotentialTargetTiles += (il) =>
 		{
 			var c = new ILCursor(il);
 			while (c.TryGotoNext(i => i.MatchBrfalse(out _)))
@@ -51,7 +51,7 @@ internal sealed class ExtractinatorDetours : ModSystem
 			throw new Exception("Failed to IL Edit FillPotentialTargetTiles");
 		};
 
-		IL.Terraria.GameContent.ObjectInteractions.TileSmartInteractCandidateProvider.ProvideCandidate += il =>
+		Terraria.GameContent.ObjectInteractions.IL_TileSmartInteractCandidateProvider.ProvideCandidate += il =>
 		{
 			var c = new ILCursor(il);
 

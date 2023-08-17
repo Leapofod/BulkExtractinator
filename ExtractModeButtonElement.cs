@@ -13,7 +13,7 @@ internal sealed class ExtractModeButtonElement : UIElement
 {
 	public override void OnInitialize()
 	{
-		OnMouseDown += HandlePress;
+		OnLeftMouseDown += HandlePress;
 		
 		Width.Set(TextureAssets.HbLock[0].Value.Width / 2, 0);
 		Height.Set(TextureAssets.HbLock[0].Value.Height, 0);
