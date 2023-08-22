@@ -2,6 +2,3 @@ This is a Mod that adds the capability that allows you to extract items compatib
 
 [b]Usage[/b]
 Open any Extractinator like a chest and insert the silt like items into the given slot and press the extract button.
-
-If you have any issues or want to discuss about the mod you can head over to the discord at:
-https://discord.gg/2QTmQsFpUT

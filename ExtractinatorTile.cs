@@ -9,8 +9,10 @@ internal sealed class ExtractinatorTile : GlobalTile
 {
 	public override void RightClick(int i, int j, int type)
 	{
-		if (BulkExtractinator.ExtractinatorTiles.Contains(type))
+		if (BulkExtractinator.ExtractinatorTiles.Contains(type)
+			|| BulkExtractinator.ChloroExtractinatorTiles.Contains(type))
 		{
+			// This part just gets the multitile data for the targeted extractinator.
 			var tileData = TileObjectData.GetTileData(Main.tile[i, j]);
 			int frameX = Main.tile[i, j].TileFrameX;
 			int frameY = Main.tile[i, j].TileFrameY;
@@ -18,6 +20,7 @@ internal sealed class ExtractinatorTile : GlobalTile
 			int partFrameX = frameX % tileData.CoordinateFullWidth;
 			int partFrameY = frameY % tileData.CoordinateFullHeight;
 
+			// partX and partY are relative coordinates of where on the multitile i and j are.
 			int partX = partFrameX / (tileData.CoordinateWidth + tileData.CoordinatePadding);
 			int partY = 0;
 			int remainingFrame = partFrameY;
@@ -25,13 +28,18 @@ internal sealed class ExtractinatorTile : GlobalTile
 			{
 				remainingFrame -= tileData.CoordinateHeights[partY] + tileData.CoordinatePadding;
 				partY++;
-			}	
+			}
 
+			// Current open extractinator data
 			var multitileRect = new Rectangle(i - partX, j - partY, tileData.Width, tileData.Height);
+			var openExtractorType = BulkExtractinator.ExtractinatorTiles.Contains(type) ?
+				ExtractinatorType.Normal : ExtractinatorType.Chlorophyte;
 
-			if (Main.player[Main.myPlayer].TryGetModPlayer<ExtractinatorPlayer>(out var modPlr))
+			if (ExtractinatorPlayer.GetLocalModPlayer(out var modPlr))
 			{
-				if (modPlr.CurrentOpenExtractinator == multitileRect)
+				// If the tile is the same.
+				if (modPlr.CurrentOpenExtractinator == multitileRect 
+					&& modPlr.OpenExtractinatorType == openExtractorType)
 				{
 					if (modPlr.HasExtractinatorOpen)
 						modPlr.CloseExtractinator();
@@ -40,6 +48,7 @@ internal sealed class ExtractinatorTile : GlobalTile
 				}
 				else
 				{
+					modPlr.OpenExtractinatorType = openExtractorType;
 					modPlr.CurrentOpenExtractinator = multitileRect;
 					modPlr.OpenExtractinator();
 				}

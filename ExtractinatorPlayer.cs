@@ -11,13 +11,23 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractinatorPlayer : ModPlayer
 {
+	public static bool GetLocalModPlayer(out ExtractinatorPlayer result) =>
+		Main.LocalPlayer.TryGetModPlayer(out result);
+
 	public bool HasExtractinatorOpen { get; private set; }
-	public static bool ExtractinatorOpenLocally => Main.LocalPlayer.TryGetModPlayer<ExtractinatorPlayer>(out var mdPlr) && mdPlr.HasExtractinatorOpen;
+	public static bool ExtractinatorOpenLocally => GetLocalModPlayer(out var mdPlr) && mdPlr.HasExtractinatorOpen;
 
+	/// <summary>
+	/// Coordinates and size of currently opened extractinator.
+	/// </summary>
 	public Rectangle CurrentOpenExtractinator;
+	public ExtractinatorType OpenExtractinatorType;
 
+	// Might change to allow multiple item stacks in the extractinator at a time
 	public Item ExtractinatorSlotItem;
+	// List of item stacks based on item ID
 	public readonly Dictionary<int, List<Item>> ExtractinatorBacklog;
+
 
 	public bool LimitExtractToInventory;
 
@@ -31,22 +41,26 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 
 	public override void PreUpdate()
 	{
+		// Autoclose extractinator when out of range or
+		// if the stored location doesn't actually have an extractinator
 		if (HasExtractinatorOpen)
 		{
 			var playerCenterTile = Player.Center.ToTileCoordinates16();
-			if (playerCenterTile.X < CurrentOpenExtractinator.X - Player.tileRangeX
-				|| playerCenterTile.X > CurrentOpenExtractinator.X + CurrentOpenExtractinator.Width + 
-				Player.tileRangeX
-				|| playerCenterTile.Y < CurrentOpenExtractinator.Y - Player.tileRangeY
-				|| playerCenterTile.Y > CurrentOpenExtractinator.Y + CurrentOpenExtractinator.Height +
-				Player.tileRangeY
-				|| !BulkExtractinator.ExtractinatorTiles.Contains(
-					Main.tile[CurrentOpenExtractinator.X, CurrentOpenExtractinator.Y].TileType))
+			var currExtractorX = CurrentOpenExtractinator.X;
+			var currExtractorY = CurrentOpenExtractinator.Y;
+			var currOpenTileType = Main.tile[currExtractorX, currExtractorY].TileType;
+			if (playerCenterTile.X < currExtractorX - Player.tileRangeX
+				|| playerCenterTile.X > currExtractorX + CurrentOpenExtractinator.Width + Player.tileRangeX
+				|| playerCenterTile.Y < currExtractorY - Player.tileRangeY
+				|| playerCenterTile.Y > currExtractorY + CurrentOpenExtractinator.Height + Player.tileRangeY
+				|| (!BulkExtractinator.ExtractinatorTiles.Contains(currOpenTileType)
+				&& !BulkExtractinator.ChloroExtractinatorTiles.Contains(currOpenTileType)))
 			{
 				CloseExtractinator();
 			}
 		}
-		
+
+		// If cursor is hovering an extractinator, show extractinator icon
 		if (BulkExtractinator.ExtractinatorTiles
 			.Contains(Main.tile[Player.tileTargetX, Player.tileTargetY].TileType))
 		{
@@ -54,10 +68,20 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 			Player.cursorItemIconEnabled = true;
 			Player.cursorItemIconID = ItemID.Extractinator;
 		}
+		else if (BulkExtractinator.ChloroExtractinatorTiles
+			.Contains(Main.tile[Player.tileTargetX, Player.tileTargetY].TileType))
+		{
+			Player.noThrow = 2;
+			Player.cursorItemIconEnabled = true;
+			Player.cursorItemIconID = ItemID.ChlorophyteExtractinator;
+		}
 	}
 
 	public override void PostUpdate()
 	{
+		// Open extractinator when:
+		// player closes inventory / talks to an NPC /
+		// has an NPC shop open / has a chest open
 		if (HasExtractinatorOpen && !(Main.playerInventory && Main.npcShop == 0 && Main.LocalPlayer.talkNPC == -1
 			&& Main.LocalPlayer.chest == -1))
 		{
@@ -83,20 +107,22 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 			LimitExtractToInventory = limitToInventory;
 	}
 
-	public override void OnEnterWorld()
-	{
-		DropExtractinatorItem();
-	}
+	public override void OnEnterWorld() { DropExtractinatorItem(); }
 
 	public override bool HoverSlot(Item[] inventory, int context, int slot)
 	{
-		if(ExtractinatorOpenLocally && context == ItemSlot.Context.InventoryItem)
+		if (ExtractinatorOpenLocally &&
+			(context == ItemSlot.Context.InventoryItem
+			|| context == ItemSlot.Context.HotbarItem))
 		{
 			if ((ItemSlot.NotUsingGamepad && ItemSlot.Options.DisableLeftShiftTrashCan && !ItemSlot.ShiftForcedOn
 				&& ItemSlot.ShiftInUse) || ItemSlot.ShiftInUse)
 			{
-				if (!inventory[slot].IsAir && !inventory[slot].favorited && 
-					ItemID.Sets.ExtractinatorMode[inventory[slot].type] >= 0)
+				// Shift click item into extractinator (cursor icon)
+				if (!inventory[slot].IsAir && !inventory[slot].favorited
+					&& (ItemID.Sets.ExtractinatorMode[inventory[slot].type] >= 0
+						|| (OpenExtractinatorType == ExtractinatorType.Chlorophyte
+						&& ExtractionHelper.CanConvertWithChlorophyte(inventory[slot]))))
 				{
 					Main.cursorOverride = CursorOverrideID.InventoryToChest;
 					return true;
@@ -108,7 +134,8 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 
 	public override bool ShiftClickSlot(Item[] inventory, int context, int slot)
 	{
-		if (ExtractinatorOpenLocally && context == ItemSlot.Context.InventoryItem
+		if (ExtractinatorOpenLocally
+			&& (context == ItemSlot.Context.InventoryItem || context == ItemSlot.Context.HotbarItem)
 			&& Main.cursorOverride == CursorOverrideID.InventoryToChest)
 		{
 			Utils.Swap(ref inventory[slot], ref ExtractinatorSlotItem);
@@ -148,12 +175,13 @@ internal sealed class ExtractinatorPlayer : ModPlayer
 
 		ExtractinatorSlotItem.position = Player.Center;
 		var itemDropID = Item.NewItem(Player.GetSource_DropAsItem(), Player.Center,
-			ExtractinatorSlotItem.type, ExtractinatorSlotItem.stack, false, 
+			ExtractinatorSlotItem.type, ExtractinatorSlotItem.stack, false,
 			ExtractinatorSlotItem.prefix, true);
 		Main.item[itemDropID].netDefaults(ExtractinatorSlotItem.netID);
 		Main.item[itemDropID] = ExtractinatorSlotItem.Clone();
 		Main.item[itemDropID].newAndShiny = false;
 
+		// Sync item drop on servers
 		if (Main.netMode == NetmodeID.MultiplayerClient)
 			NetMessage.SendData(MessageID.SyncItem, -1, -1, null, itemDropID);
 

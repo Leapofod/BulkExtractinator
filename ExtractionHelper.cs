@@ -1,16 +1,17 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 
 namespace BulkExtractinator;
 
-internal static class ExtractionHelper
+internal class ExtractionHelper
 {
 	internal static bool ShouldInterceptNewItem { get; private set; }
 
 	private static readonly Dictionary<int, int> _toDropItems;
-	
+
 	private static readonly Dictionary<int, int> _aquiredToInventory;
 	private static readonly Dictionary<int, int> _aquiredToVoidVault;
 
@@ -25,6 +26,51 @@ internal static class ExtractionHelper
 		_justExtractedItems2 = new List<Item>();
 	}
 
+	internal static bool CanConvertWithChlorophyte(Item item) => 
+		ItemTrader.ChlorophyteExtractinator.TryGetTradeOption(item, out _);
+
+	internal static bool MassConvert(Player player, bool limitToAvailableSpace)
+	{
+		if (!player.TryGetModPlayer(out ExtractinatorPlayer modPlr) || modPlr.ExtractinatorSlotItem.IsAir)
+			return false;
+
+		if (!CanConvertWithChlorophyte(modPlr.ExtractinatorSlotItem))
+			return false;
+
+		ref var convertionFuel = ref modPlr.ExtractinatorSlotItem;
+		bool successfulConvert = false;
+
+		if (!ItemTrader.ChlorophyteExtractinator.TryGetTradeOption(convertionFuel, out var tradeOpt))
+			return false;
+
+		for (bool didConvert = true; didConvert && !convertionFuel.IsAir;)
+		{
+			didConvert = false;
+			if (convertionFuel.stack >= tradeOpt.TakingItemStack)
+			{
+				var newItem = new Item(tradeOpt.GivingITemType, tradeOpt.GivingItemStack);
+				didConvert |= InsertToPlayerContainer(player, ref newItem);
+
+				if (!limitToAvailableSpace)
+				{
+					EnqueueItem(ref newItem);
+					didConvert = true;
+				}
+			}
+
+			if (didConvert)
+			{
+				convertionFuel.stack -= tradeOpt.TakingItemStack;
+				successfulConvert = true;
+			}
+		}
+
+		AnnounceAquiredItems(player);
+		DropQueuedItems(player);
+		return successfulConvert;
+	}
+
+	// TOOD: You can recycle fishing trash into bait, implement later
 	internal static bool MassExtract(Player player, bool limitToAvailableSpace)
 	{
 		if (!player.TryGetModPlayer(out ExtractinatorPlayer modPlr) || modPlr.ExtractinatorSlotItem.IsAir)
@@ -54,16 +100,22 @@ internal static class ExtractionHelper
 			_justExtractedItems2.RemoveAll(i => i.IsAir);
 		}
 
+		// 	private void ExtractinatorUse(int extractType, int extractinatorBlockType)
 		var p_extractinatorUse = player.GetType().GetMethod("ExtractinatorUse",
 			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+		var extractinatorTileID = modPlr.OpenExtractinatorType == ExtractinatorType.Normal ?
+			TileID.Extractinator : TileID.ChlorophyteExtractinator;
+
 		while (!extractionFuel.IsAir && _justExtractedItems2.Count == 0)
 		{
 			ShouldInterceptNewItem = true;
-			p_extractinatorUse.Invoke(player, new object[] { extractType });
+			p_extractinatorUse.Invoke(player, new object[] { extractType, extractinatorTileID });
 			ShouldInterceptNewItem = false;
 
 			if (_justExtractedItems2.TrueForAll(i => i.IsAir))
 			{
+				Main.NewText("Whoa, look, the function runs! and not the correct one too!");
 				extractionFuel.stack--;
 				continue;
 			}
@@ -73,7 +125,7 @@ internal static class ExtractionHelper
 			{
 				var newItem = _justExtractedItems2[i];
 				didExtract |= InsertToPlayerContainer(player, ref newItem);
-				
+
 				if (!limitToAvailableSpace)
 				{
 					EnqueueItem(ref newItem);
@@ -245,7 +297,7 @@ internal static class ExtractionHelper
 			{
 				int stackToDrop = (int)MathHelper.Min(item.maxStack, item.stack);
 				item.stack -= stackToDrop;
-				var newItem = Item.NewItem(player.GetSource_TileInteraction(openExtractinatorPos.X, openExtractinatorPos.Y), 
+				var newItem = Item.NewItem(player.GetSource_TileInteraction(openExtractinatorPos.X, openExtractinatorPos.Y),
 					dropPosition, Vector2.Zero, itemType, stackToDrop, false, -1, true);
 				if (Main.netMode == NetmodeID.MultiplayerClient)
 					NetMessage.SendData(MessageID.SyncItem, -1, -1, null, newItem, 1f);
@@ -262,7 +314,7 @@ internal static class ExtractionHelper
 			_toDropItems[item.type] += item.stack;
 		else
 			_toDropItems.Add(item.type, item.stack);
-		
+
 		item.TurnToAir();
 	}
 

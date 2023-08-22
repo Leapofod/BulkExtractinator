@@ -49,7 +49,8 @@ internal sealed class ExtractUIState : UIState
 				ItemSlot.OverrideHover(ref item, ItemSlot.Context.ChestItem);
 				if (Main.mouseItem.IsAir
 					|| ItemSlot.ControlInUse || ItemSlot.ShiftInUse
-					|| ItemID.Sets.ExtractinatorMode[Main.mouseItem.type] >= 0)
+					|| ItemID.Sets.ExtractinatorMode[Main.mouseItem.type] >= 0
+					|| ExtractionHelper.CanConvertWithChlorophyte(Main.mouseItem))
 				{
 					ItemSlot.LeftClick(ref item, ItemSlot.Context.InventoryItem);
 					ItemSlot.RightClick(ref item, ItemSlot.Context.InventoryItem);
@@ -59,8 +60,15 @@ internal sealed class ExtractUIState : UIState
 			}
 
 			if (item.IsAir)
-				Utils.DrawBorderStringFourWay(spriteBatch, FontAssets.MouseText.Value, Terraria.Localization.Language.GetTextValue("Mods.BulkExtractinator.InsertToExtractinator"), XPOS + 60, YPOS, Color.White, Color.Black, Vector2.Zero);
-			
+			{
+				// TODO: Move this to a dedicated UIElement
+				var text = Terraria.Localization.Language.GetTextValue("Mods.BulkExtractinator.InsertTo" +
+					(ExtractinatorPlayer.GetLocalModPlayer(out var mdplr) &&
+						mdplr.OpenExtractinatorType == ExtractinatorType.Normal ?
+							"Extractinator" : "ChloroExtractinator"));
+				Utils.DrawBorderStringFourWay(spriteBatch, FontAssets.MouseText.Value, text, XPOS + 60, YPOS, Color.White, Color.Black, Vector2.Zero);
+			}
+
 			ItemSlot.Draw(spriteBatch, ref item, ItemSlot.Context.PrefixItem, new Vector2(XPOS, YPOS));
 		}
 		Main.inventoryScale = oldScale;

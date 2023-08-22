@@ -40,7 +40,8 @@ internal sealed class ExtractModeButtonElement : UIElement
 		var tex = TextureAssets.HbLock[mdPlr.LimitExtractToInventory ? 0 : 1].Value;
 		var msg = Language.GetTextValue($"Mods.BulkExtractinator.{(mdPlr.LimitExtractToInventory ? "LimitsToInventory" : "IgnoresInventory")}");
 
-		spriteBatch.Draw(tex, GetViewCullingArea().Center(), tex.Frame(2), Color.White, 0f, tex.Frame(2).Size() / 2f, 0.8f, SpriteEffects.None, 0f);
+		spriteBatch.Draw(tex, GetViewCullingArea().Center(), tex.Frame(2), 
+			Color.White, 0f, tex.Frame(2).Size() / 2f, 0.8f, SpriteEffects.None, 0f);
 
 		if (IsMouseHovering)
 		{
@@ -48,7 +49,8 @@ internal sealed class ExtractModeButtonElement : UIElement
 			Main.instance.MouseText(msg);
 			Main.mouseText = true;
 
-			spriteBatch.Draw(tex, GetViewCullingArea().Center(), tex.Frame(2, 1, 1), Main.OurFavoriteColor, 0f, tex.Frame(2, 1, 1).Size() / 2f, 0.8f, SpriteEffects.None, 0f);
+			spriteBatch.Draw(tex, GetViewCullingArea().Center(), tex.Frame(2, 1, 1), 
+				Main.OurFavoriteColor, 0f, tex.Frame(2, 1, 1).Size() / 2f, 0.8f, SpriteEffects.None, 0f);
 		}
 	}
 }

@@ -10,7 +10,7 @@ namespace BulkExtractinator;
 
 internal sealed class ExtractinatorButtonElement : UIElement
 {
-	private bool ShowButton => ExtractinatorPlayer.ExtractinatorOpenLocally 
+	private static bool ShowButton => ExtractinatorPlayer.ExtractinatorOpenLocally 
 		&& !Main.LocalPlayer.GetModPlayer<ExtractinatorPlayer>().ExtractinatorSlotItem.IsAir;
 
 	public override void OnInitialize()
@@ -26,9 +26,11 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		if (evt.Target != this)
 			return;
 
-		bool limitToInventory = Main.LocalPlayer.TryGetModPlayer<ExtractinatorPlayer>(out var mPlr) && mPlr.LimitExtractToInventory;
+		bool limitToInventory = ExtractinatorPlayer.GetLocalModPlayer(out var mPlr) && mPlr.LimitExtractToInventory;
 
-		var res = ExtractionHelper.MassExtract(Main.LocalPlayer, limitToInventory);
+		var res = ExtractionHelper.MassConvert(Main.LocalPlayer, limitToInventory) ||
+			ExtractionHelper.MassExtract(Main.LocalPlayer, limitToInventory);
+
 		if (res)
 			SoundEngine.PlaySound(in SoundID.Grab);
 	}
@@ -38,11 +40,9 @@ internal sealed class ExtractinatorButtonElement : UIElement
 		if (!ShowButton)
 			return;
 
-		var tex = TextureAssets.Reforge[0].Value;
-		if (IsMouseHovering)
-			tex = TextureAssets.Reforge[1].Value;
-
-		spriteBatch.Draw(tex, GetViewCullingArea().Center(), null, Color.White, 0f, tex.Size() / 2f, 1f, SpriteEffects.None, 0f);
+		var tex = TextureAssets.Reforge[IsMouseHovering ? 1 : 0].Value;
+		spriteBatch.Draw(tex, GetViewCullingArea().Center(), null, 
+			Color.White, 0f, tex.Size() / 2f, 1f, SpriteEffects.None, 0f);
 
 		if (IsMouseHovering)
 			Main.LocalPlayer.mouseInterface = true;

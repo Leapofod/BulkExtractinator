@@ -31,17 +31,17 @@ internal sealed class ExtractinatorUI : ModSystem
 		{
 			_extractUI.Deactivate();
 			_userInterface.SetState(null);
-		}
 
-		_userInterface = null;
-		_extractUI = null;
+			_userInterface = null;
+			_extractUI = null;
+		}
 	}
 
 
 	public override void UpdateUI(GameTime gameTime)
 	{
 		_lastUIUpdate = gameTime;
-		
+
 		if (ExtractinatorPlayer.ExtractinatorOpenLocally)
 			_userInterface.Update(gameTime);
 	}
