@@ -1,6 +1,11 @@
 Mods: {
 	BulkExtractinator: {
-		InsertToExtractinator: Insert items to extract
+		InsertToExtractinator: Insert items here to extract
+		InsertToChloroExtractinator:
+			'''
+			Insert items here to extract or
+			convert
+			'''
 		LimitsToInventory: Stops extracting when out of inventory space
 		IgnoresInventory: Extracts everything regardless of remaining inventory space
 	}
