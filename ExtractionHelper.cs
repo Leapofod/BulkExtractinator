@@ -15,7 +15,7 @@ internal class ExtractionHelper
 	private static readonly Dictionary<int, int> _aquiredToInventory;
 	private static readonly Dictionary<int, int> _aquiredToVoidVault;
 
-	private static List<Item> _justExtractedItems2;
+	private static List<Item> _justExtractedItems;
 
 	static ExtractionHelper()
 	{
@@ -23,7 +23,7 @@ internal class ExtractionHelper
 		_aquiredToInventory = new Dictionary<int, int>();
 		_aquiredToVoidVault = new Dictionary<int, int>();
 
-		_justExtractedItems2 = new List<Item>();
+		_justExtractedItems = new List<Item>();
 	}
 
 	internal static bool CanConvertWithChlorophyte(Item item) => 
@@ -85,19 +85,19 @@ internal class ExtractionHelper
 
 		if (modPlr.ExtractinatorBacklog.ContainsKey(extractType))
 		{
-			modPlr.ExtractinatorBacklog.Remove(extractType, out _justExtractedItems2);
-			for (int i = 0; i < _justExtractedItems2.Count; i++)
+			modPlr.ExtractinatorBacklog.Remove(extractType, out _justExtractedItems);
+			for (int i = 0; i < _justExtractedItems.Count; i++)
 			{
-				var backlogItem = _justExtractedItems2[i];
+				var backlogItem = _justExtractedItems[i];
 				successfulExtract |= InsertToPlayerContainer(player, ref backlogItem);
 				if (!limitToAvailableSpace)
 				{
 					EnqueueItem(ref backlogItem);
 					successfulExtract = true;
 				}
-				_justExtractedItems2[i] = backlogItem;
+				_justExtractedItems[i] = backlogItem;
 			}
-			_justExtractedItems2.RemoveAll(i => i.IsAir);
+			_justExtractedItems.RemoveAll(i => i.IsAir);
 		}
 
 		// 	private void ExtractinatorUse(int extractType, int extractinatorBlockType)
@@ -107,13 +107,13 @@ internal class ExtractionHelper
 		var extractinatorTileID = modPlr.OpenExtractinatorType == ExtractinatorType.Normal ?
 			TileID.Extractinator : TileID.ChlorophyteExtractinator;
 
-		while (!extractionFuel.IsAir && _justExtractedItems2.Count == 0)
+		while (!extractionFuel.IsAir && _justExtractedItems.Count == 0)
 		{
 			ShouldInterceptNewItem = true;
 			p_extractinatorUse.Invoke(player, new object[] { extractType, extractinatorTileID });
 			ShouldInterceptNewItem = false;
 
-			if (_justExtractedItems2.TrueForAll(i => i.IsAir))
+			if (_justExtractedItems.TrueForAll(i => i.IsAir))
 			{
 				// Debug message, behaves incorrectly if another mod has 'air' as a possible drop
 				// Main.NewText("Whoa, look, the function runs! and not the correct one too!");
@@ -122,9 +122,9 @@ internal class ExtractionHelper
 			}
 
 			bool didExtract = false;
-			for (int i = 0; i < _justExtractedItems2.Count; i++)
+			for (int i = 0; i < _justExtractedItems.Count; i++)
 			{
-				var newItem = _justExtractedItems2[i];
+				var newItem = _justExtractedItems[i];
 				didExtract |= InsertToPlayerContainer(player, ref newItem);
 
 				if (!limitToAvailableSpace)
@@ -132,9 +132,9 @@ internal class ExtractionHelper
 					EnqueueItem(ref newItem);
 					didExtract = true;
 				}
-				_justExtractedItems2[i] = newItem;
+				_justExtractedItems[i] = newItem;
 			}
-			_justExtractedItems2.RemoveAll(i => i.IsAir);
+			_justExtractedItems.RemoveAll(i => i.IsAir);
 
 			if (didExtract)
 			{
@@ -143,7 +143,7 @@ internal class ExtractionHelper
 			}
 		}
 
-		modPlr.ExtractinatorBacklog[extractType] = _justExtractedItems2;
+		modPlr.ExtractinatorBacklog[extractType] = _justExtractedItems;
 		AnnounceAquiredItems(player);
 		DropQueuedItems(player);
 		return successfulExtract;
@@ -152,7 +152,7 @@ internal class ExtractionHelper
 	internal static void OnNewItemIntercept(int Type, int Stack)
 	{
 		var extractedItem = new Item(Type, Stack);
-		_justExtractedItems2.Add(extractedItem);
+		_justExtractedItems.Add(extractedItem);
 	}
 
 
