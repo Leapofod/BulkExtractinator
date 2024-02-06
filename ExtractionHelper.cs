@@ -115,7 +115,8 @@ internal class ExtractionHelper
 
 			if (_justExtractedItems2.TrueForAll(i => i.IsAir))
 			{
-				Main.NewText("Whoa, look, the function runs! and not the correct one too!");
+				// Debug message, behaves incorrectly if another mod has 'air' as a possible drop
+				// Main.NewText("Whoa, look, the function runs! and not the correct one too!");
 				extractionFuel.stack--;
 				continue;
 			}
