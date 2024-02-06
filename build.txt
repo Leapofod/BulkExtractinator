@@ -1,4 +1,4 @@
 displayName = Bulk Extractinator
 author = Leapofod
-version = 1.1.0
+version = 1.1.1
 buildIgnore = *.aseprite
